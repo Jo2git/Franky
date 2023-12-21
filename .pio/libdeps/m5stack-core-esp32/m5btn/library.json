@@ -1,0 +1,21 @@
+
+{
+  "name": "m5btn",
+  "version": "1.0.6",
+  "description": "Library for M5Stack to access 3 hw buttons and the rotary encoder",
+  "keywords": "",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/Moba160/m5btn.git"
+  },
+  "authors":
+  [
+
+  ],
+  "license": "LGPL-2.1-or-later",
+  "dependencies": {
+  },
+  "frameworks": "*",
+  "platforms": "*"
+  }
