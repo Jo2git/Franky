@@ -28,6 +28,7 @@ class Webserver {
     
     static AsyncWebServer webServer;
 
+    static bool wlConnected; // WLAN erkannt
     
   private:
     static bool inAPMode; // im Access Point Mode?

@@ -77,7 +77,7 @@ String htmlPageReplace(String var) {
     return Z21::flagsValid ? "" : "(noch nicht ausgelesen)";
 
   } else if (var == "HIDE_FLAGS") {
-    return Z21::flagsValid ? "block" : "none"; 
+    return Z21::flagsValid ? "block" : "none";
 
   } else if (var == "BCF_BASIC") {
     return yesno("BCF_BASIC", Z21::BCF_BASIC);
@@ -113,7 +113,7 @@ String htmlPageReplace(String var) {
     return yesno("BCF_LNFB", Z21::BCF_LNFB);
 
   } else if (var == "LOCOLIB") {
-    String result = 
+    String result =
     "<table class=\"w3-table-all w3-hoverable\">"
     "<thead><tr class=\"w3-teal\">"
     "<th class=\"w3-right-align\">Index</th>"
@@ -122,6 +122,7 @@ String htmlPageReplace(String var) {
     "<th>Decoder</th>"
     "<th class=\"w3-right-align\">Beschleunigungsrate</th>"
     "<th class=\"w3-right-align\">Bremsrate</th>"
+    "<th class=\"w3-right-align\">vmax</th>"
     "<th class=\"w3-right-align\">höchste belegte Funktionsnummer</th>"
     "<th>Funktionsdefinitionen</th>"
     "</tr></thead>";
@@ -134,6 +135,7 @@ String htmlPageReplace(String var) {
         "<td>" + String(Loco::loco[i]->decoder) + "</td>"
         "<td>" + String(Loco::loco[i]->getAcc()) + "</td>"
         "<td>" + String(Loco::loco[i]->getDec()) + "</td>"
+        "<td>" + String(Loco::loco[i]->getVmax()) + "</td>"
         "<td>" + String(Loco::loco[i]->getNumFct()) + "</td>"
         "<td>" + Loco::loco[i]->fctSpec + "</td>"
         "</tr>";
@@ -141,11 +143,11 @@ String htmlPageReplace(String var) {
     }
     result += "</table>";
     return result;
-  
+
   } else if (var == "MAX_LOCO_LIB_SIZE") {
     return String(MAX_LOCOS);
   }
-  
+
   return "";
 }
 
@@ -155,13 +157,13 @@ void wsReceived(String received) {
   int n=split(received, '|', elements);
 
   if (elements[0] == "pomWrite") {
-    // M5Btn::ledRing(200, 200, 200,  20); 
+    // M5Btn::ledRing(200, 200, 200,  20);
     Z21::LAN_X_CV_POM_WRITE_BYTE(elements[1].toInt(), elements[2].toInt(), elements[3].toInt());
 
   } else if (elements[0] == "cvWrite") {
     // Z21::LAN_X_CV_WRITE(elements[1].toInt(), elements[2].toInt());
-    M5Btn::ledRing(200, 200, 200,  20); 
+    M5Btn::ledRing(200, 200, 200,  20);
   }
 
-  
+
 }

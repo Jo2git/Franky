@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "Z21.h"
 
-#define PRODUCT_VERSION "1.3.3"
+#define PRODUCT_VERSION "1.4.0"
 #define PRODUCT_NAME "Franky"
 #define HOST_NAME "Franky" // z.B. für Netzwerk
 
@@ -39,6 +39,7 @@
 #define colorWiFiDisconnected TFT_RED // Nicht mit WLAN verbunden
 #define colorDigiStationDisconnected TFT_BLUE // Zwar mit WLAN, aber nicht mit Z21 verbunden
 #define colorTrackPowerOff TFT_ORANGE // Zwar mit WLAN/Z21 verbunden, aber Gleisspannung aus
+#define colorEmergencyStop TFT_GREENYELLOW // Zwar mit WLAN/Z21 verbunden, aber Nothalt
 #define colorAllConnected TFT_DARKGREEN // Alles verbunden
 
 // Programmiermodus
@@ -51,32 +52,13 @@
 // Loksteuerung
 
 #define MAX_LOCO_CHANNELS 5 // maximale Lokkanäle (eigentlich eigentständige Seiten), muss ungerade sein
-#define MAX_LOCOS 100 // in gleichzeitiger Steuerung mögliche Lokzahl. Erhöhung nur mit Bedacht, kleiner 67000 Heapgröße bringt Abstürze!
+#define MAX_LOCOS 75 // in gleichzeitiger Steuerung mögliche Lokzahl. Erhöhung nur mit Bedacht, kleiner 67000 Heapgröße bringt Abstürze!
 #define LOCO_CYCLE 250 // Zyklus, alle wieviel ms die Lokbeschleunigung ausgerechnet wird
+#define BAT_CHECK_CYCLE 900000 // Zyklus Batterietest [ms]
 
 #define COLOR_ACCELERATING TFT_DARKGREEN
 #define COLOR_DECELERATING TFT_RED
 #define COLOR_TAKENOVER TFT_BLUE
-
-// ----------------------------------------------------------------------------------------------------
-// Schalten
-
-// Anzahl maximal verwalteter Weichen
-#define MAX_ACCESSORIES 70
-
-// Gleislinienfarbe
-#define TRACK_COLOR colorForeground
-
-// dto für hervorgehobenen Fahrstraße (Fahrstraßenwahl)
-#define SELECTED_ROUTE_COLOR TFT_RED
-
-// dto für den bereits gestellten Fahrstraßenteil
-#define SET_ROUTE_COLOR TFT_GREEN
-
-// Verzögerung zwischen Weichen-/Signalumlauf
-#define SWITCH_DELAY 500
-
-
 
 // ----------------------------------------------------------------------------------------------------
 // Namen für gespeicherte Präferenzen

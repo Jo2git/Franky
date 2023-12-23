@@ -5,7 +5,6 @@
 #include <M5Stack.h>
 #include <M5Btn.h>
 #include <Pref.h>
-#include "Route.h"
 #include "Loco.h"
 #include "LocoPage.h"
 #include <configuration.h>
@@ -13,7 +12,7 @@
 // ----------------------------------------------------------------------------------------------------
 // Webserver und Netzwerk
 
-#include <WiFi.h>        
+#include <WiFi.h>
 #include "Webserver.h"
 WiFiUDP Udp;
 
@@ -61,8 +60,9 @@ void setup() {
   // Kommentare entfernen, um für Testzwecke AP-Modus zu erzwingen:
   // Pref::set(prefNameSSID, "");
   // Pref::set(prefNamePasswd, "");
-  Webserver::webconfig(); 
-
+  Webserver::webconfig();
+  while (!Webserver::wlConnected){};
+  delay(1000);
 
   // Z21-Adresse bekanntgeben (kann über Webserver geändert werden)
   Z21::setIPAddress(Pref::get(prefNameZ21IPAddr, Z21_DEFAULT_ADDR));
@@ -70,11 +70,8 @@ void setup() {
   // Adressoffset, falls Gerds Gleisbox?
   Z21::setAddrOffs(Pref::get(prefNameGerdOffs, "off") == "on" ? 0x2000 : 0);
 
-  // Topologie initialisieren
-  Route::begin();
-
   // GUI initialisieren
-  Page::begin(&M5.lcd); 
+  Page::begin(&M5.lcd);
   if (!Page::isBlocked()) Page::currentPage()->setVisible(true, true);
 
   Serial.printf("Heapauslastung zu Beginn: %d Byte\n", ESP.getFreeHeap());
@@ -85,8 +82,10 @@ void setup() {
 //
 
 bool UDPServerInitialised = false;
-long lastHeartbeatSent = -Z21_HEARTBEAT; // gleich anfangs Heartbeat erzwingen
+bool initState = true;
+long lastHeartbeatSent = -Z21_HEARTBEAT + 100 ; // gleich anfangs Heartbeat erzwingen
 long lastDriven = 0;
+long lastCheck = -BAT_CHECK_CYCLE + 50; // vorbelegen, damit schon beim ersten Aufruf der Batteriestatus gelesen wird
 
 void loop() {
 
@@ -98,14 +97,18 @@ void loop() {
       Udp.begin(Z21_PORT);
       UDPServerInitialised = true;
       Z21::init();
+      delay(100);
+      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist!
     }
 
-    if (millis() - lastHeartbeatSent > Z21_HEARTBEAT) {
-      Z21::heartbeat();
-      lastHeartbeatSent = millis();
-      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr());
-    }
+    if (initState && UDPServerInitialised) Z21::LAN_X_GET_STATUS(); initState = false; // einmalig Status einlesen
+  }
 
+  if (millis() - lastHeartbeatSent > Z21_HEARTBEAT) {
+    Z21::heartbeat();
+    lastHeartbeatSent = millis();
+    if (WiFi.status() == WL_CONNECTED)  Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr());
+    if (Webserver::wlConnected == true)  Page::drawStatusBar();
   }
 
   // Fahren
@@ -120,4 +123,9 @@ void loop() {
   // Buttons und Drehregler einlesen
   M5Btn::loop();
 
+  // Batteriestatus lesen
+  if (millis() - lastCheck > BAT_CHECK_CYCLE) {
+    lastCheck = millis();
+    Page::batterie = M5.Power.getBatteryLevel();
+  }
 }

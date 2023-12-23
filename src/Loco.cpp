@@ -18,8 +18,9 @@ int split(String s, char listSeparator, String elements[]);
 #define idxDecoder 2
 #define idxAcc 3
 #define idxDec 4
-#define idxNumFunc 5
-#define idxFunc 6
+#define idxVmax 5
+#define idxNumFunc 6
+#define idxFunc 7
 #define MAX_ELEM idxFunc + 1
 
 #define SEPARATOR ';' // Trennzeichen Spalten Lokbeschreibung
@@ -40,14 +41,14 @@ void Loco::begin() {
   int headlineRead = false;
 
   for (int i=0; i<MAX_LOCOS; i++) loco[i] = 0;
-  
+
   if(!file){
     Serial.printf("Kann Lokdatendatei %s nicht lesen.\n", LOCO_FILE_NAME);
     return;
   }
-  
+
   while(file.available()) {
-    
+
     // Lokbeschreibung ab 2. Zeile
     line = file.readStringUntil('\n');
     if (!headlineRead) {
@@ -80,15 +81,16 @@ void Loco::begin() {
       // verbauter Decoder
       if (numElems > idxDecoder) loco->decoder = elems[idxDecoder];
 
-      // Anfahr- und Bremsverzögerung
-      if (numElems > idxAcc) if (elems[idxAcc] != "") loco->acc = elems[idxAcc].toInt(); 
+      // Anfahr- und Bremsverzögerung, Geschwindigkeit bei MaxFst
+      if (numElems > idxAcc) if (elems[idxAcc] != "") loco->acc = elems[idxAcc].toInt();
       if (numElems > idxDec) if (elems[idxDec] != "") loco->dec = elems[idxDec].toInt();
+      if (numElems > idxVmax) if (elems[idxVmax] != "") loco->vmax = elems[idxVmax].toInt();
 
       // Anzahl Funktionen
       if (numElems > idxNumFunc) if (elems[idxNumFunc] != "")  loco->setNumFct(elems[idxNumFunc].toInt());
 
       // Lokfunktionsspezifikation (Funktionsmapping, Kurz-/Langname)
-      if (numElems > idxFunc) { 
+      if (numElems > idxFunc) {
         if (elems[idxFunc] != "") {
           loco->fctSpec = elems[idxFunc];
           int numF = split(elems[idxFunc], LIST_SEP, funcs); // funcs[] enthält Funktionsspecs wie z.B. 1=2=kurz/lang (F1 mappen auf F2, Kurzname kurz, Langname lang)
@@ -108,7 +110,7 @@ void Loco::begin() {
       }
     }
   }
-  
+
   file.close();
 
   Serial.printf("Daten von %d Loks aus Datei %s gelesen.\n", numLocos, LOCO_FILE_NAME);
@@ -141,6 +143,14 @@ Locofunction* Loco::getFctByName(String shortName) {
   }
   return 0;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//
+
+Locofunction* Loco::getFctMappedTo(int isMapped) {
+  if(fct[isMapped]->getMappedTo()) return fct[fct[isMapped]->getMappedTo()];
+  else return fct[isMapped];
+  }
 
 
 // ----------------------------------------------------------------------------------------------------
@@ -187,10 +197,10 @@ void Loco::increaseAddress(int8_t delta) {
 // aus LOCO_FILE_NAME eingelesenen, bekannten Loks ja ab Index 1 stehen
 
 Loco* Loco::addLoco(int addr) {
-  
+
   Loco* newLoco = existsLoco(addr);
   if (newLoco != 0) return newLoco;
-  
+
   newLoco = new Loco(addr);
   for (int i=1; i<MAX_LOCOS; i++) {
     if (loco[i] == 0) {
@@ -287,19 +297,19 @@ void Loco::drive () {
         loco[l] -> speed += 5.0/(loco[l] -> acc);
         if (loco[l] -> speed > MaxFst) loco[l] -> speed = MaxFst;
       }
-      
+
       if (loco[l] -> isDecelerating()) {
         loco[l] -> speed -= 5.0/(loco[l] -> dec);
         if (loco[l] -> speed < 0) loco[l] -> speed = 0;
       }
-           
+
       loco[l] -> fst = loco[l] -> speed;
 
-      Z21::LAN_X_SET_LOCO_DRIVE(loco[l] -> addr, 
-        loco[l] -> forward ? Forward : Backward, 
+      Z21::LAN_X_SET_LOCO_DRIVE(loco[l] -> addr,
+        loco[l] -> forward ? Forward : Backward,
         loco[l] -> fst);
 
-      // Update Info Anzeige 
+      // Update Info Anzeige
       Page::currentPage() -> locoWasDriven(loco[l]->addr);
       // if (loco[l] -> fst == loco[l] -> targetFst) M5.Speaker.tone(200, 5);
     }

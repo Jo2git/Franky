@@ -3,9 +3,12 @@
 
 #include <Z21.h>
 #include "configuration.h"
-#include "Locofuntion.h"
+#include "Locofunction.h"
 
 #define MaxFst 126
+#define Fst1 MaxFst/4 + 1
+#define Fst2 Fst1 + Fst1
+#define Fst3 Fst2 + Fst1
 #define LOCO_FILE_NAME "/locoData.csv"
 
 class Loco {
@@ -21,17 +24,19 @@ class Loco {
 
     boolean forward = true;
     boolean takenOver = false;
-    
+
     int lastFunction = 5;
 
     int getAddr() { return addr; }
     Locofunction* getFct(int index) { if (index>=0 && index< MaxFct + 1) return fct[index]; }
+    Locofunction* getFctMappedTo(int index) ; //{ if (mappedTo>=0 && mappedTo< MaxFct + 1) return fct[mappedTo]; }
     Locofunction* getFctByName(String shortName);
     int getNumFct() { return numFct; }
     void setNumFct(int numFct) { this->numFct = numFct; }
 
     int getAcc() { return acc; }
     int getDec() { return dec; }
+    int getVmax() { return vmax; }
 
     static Loco* loco[MAX_LOCOS];
 
@@ -61,17 +66,18 @@ class Loco {
     static void drive();
 
     // Regelmäßig von Scheduler zu rufende Auffrischen der Lokinfo, damit Notifikationen noch ankommen
-    static void refresh();  
+    static void refresh();
 
     static void dumpLocos(bool all);
 
   private:
     Loco(int itsAddr);
     ~Loco();
-    
+
     int addr = 3;
     int acc = 5;
     int dec =5;
+    int vmax = 0;
     int numFct = MaxFct;
     Locofunction* fct[MaxFct+1];
     static int minAddress, maxAddress;

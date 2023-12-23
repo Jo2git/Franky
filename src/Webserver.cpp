@@ -16,7 +16,7 @@
 #include "Menu.h"
 
 #include <AsyncTCP.h>
-#include <AsyncElegantOTA.h>
+//#include <AsyncElegantOTA.h>
 #include <ESPmDNS.h>
 
 #include "Pref.h"
@@ -25,6 +25,7 @@
 #include "Page.h"
 
 bool Webserver::inAPMode = true;
+bool Webserver::wlConnected = false;
 WiFiMulti wifiMulti;
 
 extern int split(String s, char listSeparator, String elements[]);
@@ -77,6 +78,9 @@ void Webserver::webconfig() {
       "<tr><td>SSID</td><td><input type=\"text\" name=\"ssid\" value=\"" + Pref::get(prefNameSSID) + "\"></td></tr>"
       "<tr><td>Passwort</td><td><input type=\"text\" name=\"password\" value=\"" + Pref::get(prefNamePasswd) + "\"></td></tr>"
       "<tr><td>Z21-Adresse</td><td><input type=\"text\" name=\"z21addr\" value=\"" + Pref::get(prefNameZ21IPAddr, Z21_DEFAULT_ADDR) + "\"></td></tr>"
+      "<tr><td>alternatives WLAN</td></tr>"
+      "<tr><td>SSID</td><td><input type=\"text\" name=\"ssid2\" value=\"" + Pref::get(prefNameSSID2) + "\"></td></tr>"
+      "<tr><td>Passwort</td><td><input type=\"text\" name=\"password2\" value=\"" + Pref::get(prefNamePasswd2) + "\"></td></tr>"
       "<tr><td><input type=\"submit\" value=\"Speichern\"></td><td></td></tr>"
       "</table>"
       "<p/>"
@@ -111,6 +115,22 @@ void Webserver::webconfig() {
           Serial.printf("z21addr: %s\n", z21addr.c_str());
           Pref::set(prefNameZ21IPAddr, z21addr);
       } 
+      if (request->hasParam("ssid2")) {
+          ssid = request->getParam("ssid2")->value();
+          Serial.printf("SSID2: %s\n", ssid.c_str());
+          if (Pref::get(prefNameSSID2) != ssid) {
+              Pref::set(prefNameSSID2, ssid);
+              credentialsChanged = true;
+          }
+      } 
+      if (request->hasParam("password2")) {
+          passwd = request->getParam("password2")->value();
+          Serial.printf("password2: %s\n", passwd.c_str());
+          if (Pref::get(prefNamePasswd2) != passwd) {
+              Pref::set(prefNamePasswd2, passwd);
+              credentialsChanged = true;
+          }
+      } 
 
       M5.lcd.fillScreen(TFT_BLUE);
       M5.lcd.setTextColor(TFT_WHITE);
@@ -133,7 +153,7 @@ void Webserver::webconfig() {
           if (credentialsChanged) ESP.restart();
   });
 
-  WiFi.mode(WIFI_MODE_APSTA); // AP = Access Point, STA = Station Mode
+//  WiFi.mode(WIFI_MODE_APSTA); // AP = Access Point, STA = Station Mode
   String index = Pref::get(prefNameFrankyIndex, "");
   if (index == "0") index = "";
   WiFi.setHostname((HOST_NAME + index).c_str()); 
@@ -148,6 +168,8 @@ void Webserver::webconfig() {
   // WLAN-Daten wurden bereits eingegeben (und gespeichert)
   if ((ssid != "" && passwd != "") || (ssid2 != "" && passwd2 != "")) {
 
+  WiFi.mode(WIFI_MODE_STA); // STA = Station Mode
+
       inAPMode = false;
 
       // WLAN-Bildschirm mit Countdown
@@ -158,9 +180,10 @@ void Webserver::webconfig() {
       M5.lcd.setTextColor(TFT_WHITE);
       M5.lcd.setTextDatum(CC_DATUM);
       M5.lcd.drawString(String(PRODUCT_NAME) + " " + PRODUCT_VERSION, TFT_W / 2, TFT_H * 0.15, 4);
-      M5.lcd.drawString("Verbinde mit WLAN SSID(s)", TFT_W / 2, TFT_H * 0.30, 2);
-      M5.lcd.drawString(ssid + (ssid2 == "" ? "" : " oder "), TFT_W / 2, TFT_H * 0.50, 4); 
-      if (ssid2 != "") M5.lcd.drawString(ssid2, TFT_W / 2, TFT_H * 0.60, 4);
+      M5.lcd.drawString(__DATE__ " " __TIME__, TFT_W / 2, TFT_H * 0.25, 2);
+      M5.lcd.drawString("Verbinde mit WLAN SSID(s):", TFT_W / 2, TFT_H * 0.40, 2);
+      M5.lcd.drawString(ssid + (ssid2 == "" ? "" : " oder "), TFT_W / 2, TFT_H * 0.60, 4); 
+      if (ssid2 != "") M5.lcd.drawString(ssid2, TFT_W / 2, TFT_H * 0.70, 4);
 
 
       int connCount = 10; int pixels=30; 
@@ -169,6 +192,12 @@ void Webserver::webconfig() {
           M5.lcd.fillRect(0, TFT_H * 0.80 - pixels/2, TFT_W, pixels, TFT_BLUE);
           M5.lcd.drawString(String(connCount--), TFT_W / 2, TFT_H * 0.80, 4);
           delay(500);
+      }
+
+      // nach Verbindungsaufbau nur AP-Mode abschalten
+      if (wifiMulti.run() == WL_CONNECTED) {
+        WiFi.mode(WIFI_MODE_STA); // STA = Station Mode
+        Webserver::wlConnected = true;
       }
 
       MDNS.begin((HOST_NAME + index).c_str());
@@ -286,11 +315,12 @@ String Webserver::processor(const String& var) {
     // ==== Menüband ==============================================================================
 
   } else if (var == "MENU") {
+    String index = Pref::get(prefNameFrankyIndex, "");
     String menu =
       "<!DOCTYPE html>"
       "<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">"
       "<html>"
-      "<title>" + String(PRODUCT_NAME) + "</title>"
+      "<title>" + String(PRODUCT_NAME) + index + "</title>"
       "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
       "<link rel=\"stylesheet\" href=\"w3.css\">"
       "<head>"
