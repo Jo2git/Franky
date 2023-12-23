@@ -77,6 +77,7 @@ class LocoPage: public Page, public Z21Observer {
     Symbolbox* headlights;
     Numberbox* speed;
     Numberbox* targetSpeed;
+    Numberbox* tachoSpeed;
 
     // Modi
     bool driveManually = false; // Fahrmodus. true: manuell fahren, false: automatisch bremsen/beschleunigen

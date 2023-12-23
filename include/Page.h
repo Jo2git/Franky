@@ -44,6 +44,7 @@ class Page : public Z21Observer {
         
         Page(char navigable) : navigable{navigable} {}
 
+        static void drawStatusBar();
         static void begin(TFT_eSPI* tft);
         static void setBlocked(boolean blocked) { Page::blocked = blocked; }
         static bool isBlocked() { return blocked; }
@@ -76,6 +77,7 @@ class Page : public Z21Observer {
 
         static int bgColor;
         static int fgColor;
+        static int batterie;
 
   protected:
 

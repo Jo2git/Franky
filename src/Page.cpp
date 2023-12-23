@@ -1,8 +1,6 @@
 #include "Page.h"
 #include "LocoPage.h"
-#include "ProgPage.h"
 #include "InfoPage.h"
-#include "TrackPage.h"
 
 #include "M5Btn.h"
 #include "functions.h"
@@ -22,8 +20,36 @@ int Page::col;
 Page* Page::navigationGrid[PAGE_ROWS][PAGE_COLS];
 bool Page::blocked = false;
 
-// int Page::oldFocusIndex, Page::newFocusIndex;
+// Batteriecheck
+int Page::batterie = 100;
 
+//
+#define NAV_IND_LEN  10 // Länge des Indikatorbalkens
+#define NAV_IND_WIDTH 4 // Dicke
+bool statusChanged;
+
+void Page::drawStatusBar() {
+  int color = colorAllConnected;
+  if (WiFi.status() != WL_CONNECTED) {
+    color = colorWiFiDisconnected;
+    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
+  }
+  else if ((millis() - Z21::lastReceived - 50> Z21_HEARTBEAT)  && !statusChanged) {
+    color = colorDigiStationDisconnected;
+    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
+  }
+  else if (Z21::getProgState() == BoolState::On) color = colorProgMode;
+  else if (Z21::getTrackPowerState() == BoolState::Off) color = colorTrackPowerOff;
+  else if (Z21::getEmergencyStopState() == BoolState::On) color = colorEmergencyStop;
+
+  statusChanged = false;
+
+  // Status: Balken oben
+    tft->fillRect(0, 0, TFT_W * batterie / 100, NAV_IND_WIDTH, color);
+    tft->fillRect(TFT_W * batterie / 100, 0, TFT_W - TFT_W * batterie / 100, NAV_IND_WIDTH,TFT_DARKGREY);
+    if (isNavigable(NAV_UP))
+      tft->fillRect(tft->width()/2-NAV_IND_LEN/2, 0, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
+}
 
 // ----------------------------------------------------------------------------------------------------
 //
@@ -33,21 +59,19 @@ void Page::begin(TFT_eSPI* tft) {
   M5Btn::begin(tft);
   Page::tft = tft;
 
-  ProgPage* pp = new ProgPage(NAV_ALL);
   LocoPage* lp = new LocoPage(NAV_ALL);
   InfoPage* ip = new InfoPage(NAV_ALL);
-  TrackPage *tp = new TrackPage(NAV_ALL);
 
   // Initialisierung oben hat nicht funktioniert, Konstruktoren wurden nicht gerufen
   Page* tmp[PAGE_ROWS][PAGE_COLS] = {
-      {0, tp, 0},
-      {ip, lp, pp}
+      {0, 0, 0},
+      {ip, lp, 0}
     };
 
     memcpy(navigationGrid, tmp, sizeof(tmp));
 
     // initiale Seite
-    row = 1; col = 1; 
+    row = 1; col = 1;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -59,8 +83,6 @@ void Page::loop() {
 // ----------------------------------------------------------------------------------------------------
 //
 
-#define NAV_IND_LEN  10 // Länge des Indikatorbalkens
-#define NAV_IND_WIDTH 4 // Dicke 
 
 void Page::setVisible(bool visible, bool clearScreen) {
 
@@ -82,41 +104,28 @@ void Page::navigationHint() {
 
   //----------------- Diese Stati nicht mehr im Record, sondern in Notifikation, oder???? Ansonsten fehlen sie dort
 
-  int color = colorAllConnected;
-  if (WiFi.status() != WL_CONNECTED) color = colorWiFiDisconnected;
-  else if (millis() - Z21::lastReceived > Z21_HEARTBEAT) color = colorDigiStationDisconnected;
-  else if (Z21::getProgState() == BoolState::On) color = colorProgMode;
-  else if (Z21::getTrackPowerState() == BoolState::Off) color = colorTrackPowerOff;
-
-  // Status: Balken oben
-  tft->fillRect(0, 0, TFT_W, NAV_IND_WIDTH, color);
+  drawStatusBar();
+  statusChanged = false;
 
   // Status: LED-RING
   if (Z21::getTrackPowerState() == BoolState::Off) M5Btn::ledRing(255, 255, 0, 10);
   else M5Btn::ledRing(0, 0, 0, 10);
 
-  if (isBeta()) {
-    tft->setTextColor(TFT_RED, bgColor);
-    tft->setTextDatum(TC_DATUM);
-    if (Pref::get("beta") == ON && isBeta()) tft->drawString(" Beta ", TFT_W/2, 0, 2);
-  }
-
   // Am jeweiligen Rand Navigationshinweis (dass es dort eine Nachbarseite gibt):
-
-  // oben
-  if (isNavigable(NAV_UP)) 
+/*  // oben
+  if (isNavigable(NAV_UP))
     tft->fillRect(tft->width()/2-NAV_IND_LEN/2, 0, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
-
+*/
   // unten
-  if (isNavigable(NAV_DOWN)) 
+  if (isNavigable(NAV_DOWN))
     tft->fillRect(tft->width()/2-NAV_IND_LEN/2, tft->height()-NAV_IND_WIDTH+1, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
 
   // links
-  if (isNavigable(NAV_LEFT)) 
+  if (isNavigable(NAV_LEFT))
     tft->fillRect(0, tft->height()/2-NAV_IND_LEN/2, NAV_IND_WIDTH, NAV_IND_LEN, fgColor);
-  
+
   // rechts
-  if (isNavigable(NAV_RIGHT)) 
+  if (isNavigable(NAV_RIGHT))
     tft->fillRect(tft->width()-NAV_IND_WIDTH+1, tft->height()/2-NAV_IND_LEN/2, NAV_IND_WIDTH, NAV_IND_LEN, fgColor);
 
 }
@@ -144,16 +153,7 @@ bool Page::isNavigable(int navigation) {
       break;
     default: ; // Warnung unterdrücken
   }
-
-  // In der Betaversion sind alle Seiten zugreifbar
-  if (Pref::get(prefNameBeta) == ON) {
     return navigable;
-
-  // sonst nur die, die nicht individuell als Beta gekennzeichnet sind
-  } else {
-    return navigable && !(navigationGrid[newRow][newCol]->isBeta());
-  }
-  
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
 
   // nach links
   else if (button == M5Btn::CA && isNavigable(NAV_LEFT)) col--;
-  
+
   // nach rechts
   else if (button == M5Btn::AC && isNavigable(NAV_RIGHT)) col++;
 
@@ -185,16 +185,16 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
     navigationGrid[oldRow][oldCol] -> setVisible(false, false);
     navigationGrid[row][col] -> setVisible(true, true);
   }
-  
+
   // Fokuswechsel
   if (currentPage()->focussedWidget() != currentPage()->lastFocussed) {
     currentPage()->focusChanged();
   }
   if (button == M5Btn::B && currentPage()->getFunction(button) == FN_FOCUS) {
-    
+
     int oldFocusIndex = -1, newFocusIndex = -1;
 
-    for (int i=0; i<currentPage()->numWidgets; i++) 
+    for (int i=0; i<currentPage()->numWidgets; i++)
       if (currentPage()->widgets[i]->hasFocus()) { oldFocusIndex = i; break; }
 
     for (int i=0; i<currentPage()->numWidgets; i++) {
@@ -203,9 +203,9 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
     }
 
     // neu zeichnen, dabei wandert Fokusdarstellung auf nächstes Widget
-    if (oldFocusIndex != -1) { 
-      currentPage()->widgets[oldFocusIndex]->setFocus(false); 
-      currentPage()->widgets[oldFocusIndex]->setVisible(true); 
+    if (oldFocusIndex != -1) {
+      currentPage()->widgets[oldFocusIndex]->setFocus(false);
+      currentPage()->widgets[oldFocusIndex]->setVisible(true);
     }
 
     if (newFocusIndex != -1) { // falls es kein fokussiertes Widget gibt
@@ -213,8 +213,8 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
       currentPage()->widgets[newFocusIndex]->setVisible(true);
       if (oldFocusIndex != newFocusIndex) currentPage()->focusChanged();
     }
- 
-  } 
+
+  }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -222,9 +222,9 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
 
 void Page::setButtons(int layer) {
   this->layer = layer;
-  for (int i=0; i<numSoftkeys; i++) 
+  for (int i=0; i<numSoftkeys; i++)
     if (softkeys[i]->getLayer() != layer) softkeys[i]->setVisible(false);
-  for (int i=0; i<numSoftkeys; i++) 
+  for (int i=0; i<numSoftkeys; i++)
     if (softkeys[i]->getLayer() == layer) softkeys[i]->setVisible(true);
 }
 
@@ -274,7 +274,7 @@ Softkey* Page::getSoftkey(String caption) {
 
 
 void Page::setFunction(M5Btn::ButtonType button, String caption) {
-  for (int i=0; i<numSoftkeys; i++) 
+  for (int i=0; i<numSoftkeys; i++)
     if (softkeys[i]->getButton()==button && softkeys[i]->getLayer()==layer) softkeys[i]->setCaption(caption);
 }
 
@@ -284,31 +284,33 @@ void Page::setFunction(M5Btn::ButtonType button, String caption) {
 //
 
 void Page::trackPowerStateChanged(BoolState trackPowerState) {
+  statusChanged = true;
   navigationHint();
   Webserver::send("Z21_TRACKPOWERSTATE", Z21::toString(Z21::getTrackPowerState()));
 }
 
 void Page::shortCircuitStateChanged(BoolState shortCircuitState) {
+  statusChanged = true;
   navigationHint();
   Webserver::send("Z21_SHORTCUT", Z21::toString(Z21::getShortCircuitState(), "Ja", "Nein"));
 }
 
 void Page::emergencyStopStateChanged(BoolState emergencyStopState) {
+  statusChanged = true;
   navigationHint();
-  Webserver::send("Z21_EMERGENCYSTOP", Z21::toString(Z21::getEmergencyStopState()));  
+  Webserver::send("Z21_EMERGENCYSTOP", Z21::toString(Z21::getEmergencyStopState()));
 }
 
 void Page::progStateChanged(BoolState progState) {
+  statusChanged = true;
   navigationHint();
-  Webserver::send("Z21_PROGMODE", Z21::toString(Z21::getProgState(), "Aktiv", "Inaktiv"));  
+  Webserver::send("Z21_PROGMODE", Z21::toString(Z21::getProgState(), "Aktiv", "Inaktiv"));
 }
 
 void Page::progResult(ProgResult result, int value) {
   if (result == ProgResult::Success) Webserver::send("cv=" + String(value));
   else Webserver::send("cvFailed");
 }
-
-
 
 void Page::traceEvent(FromToZ21 direction, long diffLastSentReceived, String message, String parameters) {
   Webserver::send(String(direction == toZ21 ? "&nbsp;&nbsp;&gt;" : "&lt;") + "|" + "timeDiff" + "|" + message + "|" + parameters);
