@@ -140,7 +140,7 @@ uint16_t Z21::heartbeat() {
 // Orientiert an dem, was die WLAN-Maus anfangs sendet
 
 void Z21::init() {
-  LAN_SET_BROADCASTFLAGS(1, 0, 0, 0); // 3: on/off/prog/loco/access, 1: loco info auch für alle geänderte Loks
+  LAN_SET_BROADCASTFLAGS(1, 1, 0, 0); // 3: on/off/prog/loco/access, 1: loco info auch für alle geänderte Loks
 
 }
 
@@ -193,7 +193,7 @@ void Z21::LAN_X_GET_VERSION() {
 //
 
 void Z21::LAN_X_GET_STATUS() {
-  uint8_t bytes[] = { 0x07, 0x00, 0x40, 0x00, 0x21, 0x24, 0x00 };
+  uint8_t bytes[] = { 0x07, 0x00, 0x40, 0x00, 0x21, 0x24, 0x05 };
   sendCommand(bytes, bytes[0], NOXOR);
   trace(toZ21, diffLastSentReceived, "LAN_X_GET_STATUS", "");
 }
@@ -447,6 +447,13 @@ void Z21::receive() {
       } else if (buf[0] == 0x07 && buf[2] == 0x40 && buf[4] == 0x61 && buf[5] == 0x01 && buf[6] == 0x60) {
         trace(fromZ21, diffLastSentReceived, "LAN_X_BC_TRACK_POWER_ON", "");
         setTrackPowerState(BoolState::On);
+        setShortCircuitState (BoolState::Off);
+
+        // LAN_X_BC_TRACK_SHORT_CIRCUIT ?
+      } else if (buf[0] == 0x07 && buf[2] == 0x40 && buf[4] == 0x61 && buf[5] == 0x08 && buf[6] == 0x69) {
+        trace(fromZ21, diffLastSentReceived, "LAN_X_BC_TRACK_SHORT_CIRCUIT", "");
+        setShortCircuitState (BoolState::On);
+        setTrackPowerState(BoolState::Off);
 
         // LAN_X_BC_STOPPED ?
       } else if (buf[0] == 0x07 && buf[2] == 0x40 && buf[4] == 0x81 && buf[5] == 0x00 && buf[6] == 0x81) {
@@ -490,8 +497,8 @@ void Z21::receive() {
         // Antwort auf LAN_SYSTEMSTATE_GETDATA oder wenn LAN_SET_BROADCASTFLAGS Flag 0x00000100 gesetzt hat
       } else if (buf[2] == 0x84 && buf[3] == 0x00) {
         currMain = String(buf[5] * 256 + buf[4]) + "mA";
-        currProg = String(buf[5] * 256 + buf[6]) + "mA";
-        temp = String(buf[5] * 256 + buf[10]) + "&deg;C";
+        currProg = String(buf[7] * 256 + buf[6]) + "mA";
+        temp = String(buf[11] * 256 + buf[10]) + "°C";
         lowVoltage = (buf[17] & 0x02) > 0;
         highTemp = (buf[17] & 0x01) > 0;
 

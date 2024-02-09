@@ -27,27 +27,33 @@ int Page::batterie = 100;
 #define NAV_IND_LEN  10 // Länge des Indikatorbalkens
 #define NAV_IND_WIDTH 4 // Dicke
 bool statusChanged;
+bool Page::reInit = false;
+
 
 void Page::drawStatusBar() {
-  int color = colorAllConnected;
+  int color;
   if (WiFi.status() != WL_CONNECTED) {
     color = colorWiFiDisconnected;
     M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
+    Page::reInit = true;
   }
   else if ((millis() - Z21::lastReceived - 50> Z21_HEARTBEAT)  && !statusChanged) {
     color = colorDigiStationDisconnected;
     M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
+    Page::reInit = true;
   }
   else if (Z21::getProgState() == BoolState::On) color = colorProgMode;
+  else if (Z21::getShortCircuitState() == BoolState::On) color = colorShortCircuit;
   else if (Z21::getTrackPowerState() == BoolState::Off) color = colorTrackPowerOff;
   else if (Z21::getEmergencyStopState() == BoolState::On) color = colorEmergencyStop;
+  else if (Z21::getTrackPowerState() == BoolState::On) color = colorAllConnected;  
 
   statusChanged = false;
 
   // Status: Balken oben
     tft->fillRect(0, 0, TFT_W * batterie / 100, NAV_IND_WIDTH, color);
     tft->fillRect(TFT_W * batterie / 100, 0, TFT_W - TFT_W * batterie / 100, NAV_IND_WIDTH,TFT_DARKGREY);
-    if (isNavigable(NAV_UP))
+    if (isNavigable(NAV_UP)) 
       tft->fillRect(tft->width()/2-NAV_IND_LEN/2, 0, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
 }
 
@@ -71,18 +77,16 @@ void Page::begin(TFT_eSPI* tft) {
     memcpy(navigationGrid, tmp, sizeof(tmp));
 
     // initiale Seite
-    row = 1; col = 1;
+    row = 1; col = 1; 
 }
 
 // ----------------------------------------------------------------------------------------------------
-//
 
 void Page::loop() {
 }
 
 // ----------------------------------------------------------------------------------------------------
 //
-
 
 void Page::setVisible(bool visible, bool clearScreen) {
 
@@ -113,19 +117,19 @@ void Page::navigationHint() {
 
   // Am jeweiligen Rand Navigationshinweis (dass es dort eine Nachbarseite gibt):
 /*  // oben
-  if (isNavigable(NAV_UP))
-    tft->fillRect(tft->width()/2-NAV_IND_LEN/2, 0, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
+  if (isNavigable(NAV_UP)) 
+    tft->fillRect(tft->width()/2-NAV_IND_LEN/2, 0, NAV_IND_LEN, NAV_IND_WIDTH, fgColor); 
 */
   // unten
-  if (isNavigable(NAV_DOWN))
+  if (isNavigable(NAV_DOWN)) 
     tft->fillRect(tft->width()/2-NAV_IND_LEN/2, tft->height()-NAV_IND_WIDTH+1, NAV_IND_LEN, NAV_IND_WIDTH, fgColor);
 
   // links
-  if (isNavigable(NAV_LEFT))
+  if (isNavigable(NAV_LEFT)) 
     tft->fillRect(0, tft->height()/2-NAV_IND_LEN/2, NAV_IND_WIDTH, NAV_IND_LEN, fgColor);
-
+  
   // rechts
-  if (isNavigable(NAV_RIGHT))
+  if (isNavigable(NAV_RIGHT)) 
     tft->fillRect(tft->width()-NAV_IND_WIDTH+1, tft->height()/2-NAV_IND_LEN/2, NAV_IND_WIDTH, NAV_IND_LEN, fgColor);
 
 }
@@ -176,7 +180,7 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
 
   // nach links
   else if (button == M5Btn::CA && isNavigable(NAV_LEFT)) col--;
-
+  
   // nach rechts
   else if (button == M5Btn::AC && isNavigable(NAV_RIGHT)) col++;
 
@@ -185,16 +189,16 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
     navigationGrid[oldRow][oldCol] -> setVisible(false, false);
     navigationGrid[row][col] -> setVisible(true, true);
   }
-
+  
   // Fokuswechsel
   if (currentPage()->focussedWidget() != currentPage()->lastFocussed) {
     currentPage()->focusChanged();
   }
   if (button == M5Btn::B && currentPage()->getFunction(button) == FN_FOCUS) {
-
+    
     int oldFocusIndex = -1, newFocusIndex = -1;
 
-    for (int i=0; i<currentPage()->numWidgets; i++)
+    for (int i=0; i<currentPage()->numWidgets; i++) 
       if (currentPage()->widgets[i]->hasFocus()) { oldFocusIndex = i; break; }
 
     for (int i=0; i<currentPage()->numWidgets; i++) {
@@ -203,9 +207,9 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
     }
 
     // neu zeichnen, dabei wandert Fokusdarstellung auf nächstes Widget
-    if (oldFocusIndex != -1) {
-      currentPage()->widgets[oldFocusIndex]->setFocus(false);
-      currentPage()->widgets[oldFocusIndex]->setVisible(true);
+    if (oldFocusIndex != -1) { 
+      currentPage()->widgets[oldFocusIndex]->setFocus(false); 
+      currentPage()->widgets[oldFocusIndex]->setVisible(true); 
     }
 
     if (newFocusIndex != -1) { // falls es kein fokussiertes Widget gibt
@@ -213,8 +217,8 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
       currentPage()->widgets[newFocusIndex]->setVisible(true);
       if (oldFocusIndex != newFocusIndex) currentPage()->focusChanged();
     }
-
-  }
+ 
+  } 
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -222,9 +226,9 @@ void Page::handlePageSwitchAndFocus(M5Btn::ButtonType button) {
 
 void Page::setButtons(int layer) {
   this->layer = layer;
-  for (int i=0; i<numSoftkeys; i++)
+  for (int i=0; i<numSoftkeys; i++) 
     if (softkeys[i]->getLayer() != layer) softkeys[i]->setVisible(false);
-  for (int i=0; i<numSoftkeys; i++)
+  for (int i=0; i<numSoftkeys; i++) 
     if (softkeys[i]->getLayer() == layer) softkeys[i]->setVisible(true);
 }
 
@@ -274,7 +278,7 @@ Softkey* Page::getSoftkey(String caption) {
 
 
 void Page::setFunction(M5Btn::ButtonType button, String caption) {
-  for (int i=0; i<numSoftkeys; i++)
+  for (int i=0; i<numSoftkeys; i++) 
     if (softkeys[i]->getButton()==button && softkeys[i]->getLayer()==layer) softkeys[i]->setCaption(caption);
 }
 
@@ -298,13 +302,13 @@ void Page::shortCircuitStateChanged(BoolState shortCircuitState) {
 void Page::emergencyStopStateChanged(BoolState emergencyStopState) {
   statusChanged = true;
   navigationHint();
-  Webserver::send("Z21_EMERGENCYSTOP", Z21::toString(Z21::getEmergencyStopState()));
+  Webserver::send("Z21_EMERGENCYSTOP", Z21::toString(Z21::getEmergencyStopState()));  
 }
 
 void Page::progStateChanged(BoolState progState) {
   statusChanged = true;
   navigationHint();
-  Webserver::send("Z21_PROGMODE", Z21::toString(Z21::getProgState(), "Aktiv", "Inaktiv"));
+  Webserver::send("Z21_PROGMODE", Z21::toString(Z21::getProgState(), "Aktiv", "Inaktiv"));  
 }
 
 void Page::progResult(ProgResult result, int value) {

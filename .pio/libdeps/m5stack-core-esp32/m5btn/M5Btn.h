@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 #define btnBGColor TFT_BLUE
-#define btnFGColor TFT_WHITE
+#define btnFGColor TFT_YELLOW
 #define screenBgColor TFT_BLACK
 
 // scheinbar verdreht
@@ -22,19 +22,19 @@ class M5Btn {
 
     public:
 
-        enum ButtonType {A, B, C, AA, BB, CC, AB, AC, BA, BC, CA, CB, RotaryKnob, RotaryKnobLong, RotaryKnobDouble, RotaryKnobDoubleLong, RotaryLeft, RotaryRight };
+        enum ButtonType {A, B, C, AA, BB, CC, AB, AC, BA, BC, CA, CB, RotaryKnob, RotaryKnobLong, RotaryKnobDouble, RotaryKnobDoubleLong, RotaryLeft, RotaryRight, extBtnChnR, extBtnChnL, extBtnFktUp, extBtnFktDown };
         
         static void led(int ledIndex, int red, int green, int blue);
         static void ledRing(int red, int green, int blue, int delay_ms);
 
         static void begin(TFT_eSPI* tft);
-        static void loop();
+        static bool loop();
 
     private:
 
         static TFT_eSPI* tft;
 
-        static void encoderLoop();
+        static bool encoderLoop();
 };
 
 #endif

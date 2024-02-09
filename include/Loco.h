@@ -24,7 +24,7 @@ class Loco {
 
     boolean forward = true;
     boolean takenOver = false;
-
+    
     int lastFunction = 5;
 
     int getAddr() { return addr; }
@@ -37,6 +37,9 @@ class Loco {
     int getAcc() { return acc; }
     int getDec() { return dec; }
     int getVmax() { return vmax; }
+    int getS0() { return (s0 >= 0 && s0 <= MaxFct) ? s0 : -1; }
+    int getS1() { return (s1 >= 0 && s1 <= MaxFct) ? s1 : -1; }
+    int getS2() { return (s2 >= 0 && s2 <= MaxFct) ? s2 : -1; }
 
     static Loco* loco[MAX_LOCOS];
 
@@ -66,20 +69,23 @@ class Loco {
     static void drive();
 
     // Regelmäßig von Scheduler zu rufende Auffrischen der Lokinfo, damit Notifikationen noch ankommen
-    static void refresh();
+    static void refresh();  
 
     static void dumpLocos(bool all);
 
   private:
     Loco(int itsAddr);
     ~Loco();
-
+    
     int addr = 3;
     int acc = 5;
     int dec =5;
     int vmax = 0;
     int numFct = MaxFct;
     Locofunction* fct[MaxFct+1];
+    int s0 = -1;
+    int s1 = -1;
+    int s2 = -1;
     static int minAddress, maxAddress;
     static void readLocoData();
 };

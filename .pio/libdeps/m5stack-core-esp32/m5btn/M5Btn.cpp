@@ -89,7 +89,7 @@ bool checkOthers(int pressedButtonIndex) {
 // ----------------------------------------------------------------------------------------------------
 //
 
-void M5Btn::loop() {
+bool M5Btn::loop() {
 
     M5.update(); // Buttonzustand einlesen
 
@@ -137,8 +137,7 @@ void M5Btn::loop() {
         }
     }
 
-    encoderLoop();
-
+    return (encoderLoop() || isPressed[0] || isPressed[1] || isPressed[2]);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -166,7 +165,7 @@ long lastTurned = 0;
 int _fast;
 int _veryFast;
 
-void M5Btn::encoderLoop() {
+bool M5Btn::encoderLoop() {
     
   int tmp_increment, increment;
   boolean turnedFast, turnedVeryFast;
@@ -175,9 +174,9 @@ void M5Btn::encoderLoop() {
   if (Wire.available()) {
     tmp_increment = Wire.read();
     buttonState = Wire.read();
-  } else {
+  }/* else {
       return;
-  }
+  }*/
 
   if (tmp_increment > 127) { // nach links gedreht
     _direction = 1;
@@ -263,5 +262,5 @@ void M5Btn::encoderLoop() {
       rotaryKnobLongNotified = true;
     }
   }
-
+  return isPressed || increment || _direction; 
 }

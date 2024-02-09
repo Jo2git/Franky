@@ -4,6 +4,7 @@
 
 #include <M5Stack.h>
 #include <M5Btn.h>
+#include <ExtBtn.h>
 #include <Pref.h>
 #include "Loco.h"
 #include "LocoPage.h"
@@ -12,7 +13,7 @@
 // ----------------------------------------------------------------------------------------------------
 // Webserver und Netzwerk
 
-#include <WiFi.h>
+#include <WiFi.h>        
 #include "Webserver.h"
 WiFiUDP Udp;
 
@@ -49,6 +50,12 @@ void setup() {
   M5.Power.setPowerVin(false); // Abziehen von USB schaltet aus (true: power up again)
   //M5.Power.setAutoBootOnLoad(false); // Nicht beim Einstecken USB hochstarten, dann aber jedes zweite Einschalten erfolglos !?!?
 
+  M5.Lcd.setBrightness(screenHell);
+
+  //externe Taster
+  
+  ExtBtn::begin();
+
   // Filesystem
   SPIFFS.begin();
 
@@ -60,10 +67,10 @@ void setup() {
   // Kommentare entfernen, um für Testzwecke AP-Modus zu erzwingen:
   // Pref::set(prefNameSSID, "");
   // Pref::set(prefNamePasswd, "");
-  Webserver::webconfig();
+  Webserver::webconfig(); 
   while (!Webserver::wlConnected){};
   delay(1000);
-
+  
   // Z21-Adresse bekanntgeben (kann über Webserver geändert werden)
   Z21::setIPAddress(Pref::get(prefNameZ21IPAddr, Z21_DEFAULT_ADDR));
 
@@ -71,7 +78,7 @@ void setup() {
   Z21::setAddrOffs(Pref::get(prefNameGerdOffs, "off") == "on" ? 0x2000 : 0);
 
   // GUI initialisieren
-  Page::begin(&M5.lcd);
+  Page::begin(&M5.lcd); 
   if (!Page::isBlocked()) Page::currentPage()->setVisible(true, true);
 
   Serial.printf("Heapauslastung zu Beginn: %d Byte\n", ESP.getFreeHeap());
@@ -86,6 +93,8 @@ bool initState = true;
 long lastHeartbeatSent = -Z21_HEARTBEAT + 100 ; // gleich anfangs Heartbeat erzwingen
 long lastDriven = 0;
 long lastCheck = -BAT_CHECK_CYCLE + 50; // vorbelegen, damit schon beim ersten Aufruf der Batteriestatus gelesen wird
+long lastEvent = millis(); // letzte Bedienhandlung
+bool dunkelSchaltung = false;
 
 void loop() {
 
@@ -98,17 +107,23 @@ void loop() {
       UDPServerInitialised = true;
       Z21::init();
       delay(100);
-      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist!
+      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist! 
     }
 
     if (initState && UDPServerInitialised) Z21::LAN_X_GET_STATUS(); initState = false; // einmalig Status einlesen
   }
 
+  
+
+
   if (millis() - lastHeartbeatSent > Z21_HEARTBEAT) {
     Z21::heartbeat();
     lastHeartbeatSent = millis();
     if (WiFi.status() == WL_CONNECTED)  Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr());
-    if (Webserver::wlConnected == true)  Page::drawStatusBar();
+    if (Webserver::wlConnected == true){
+      Page::drawStatusBar();
+      if (Page::reInit) Z21::init(); Page::reInit = false;
+    }
   }
 
   // Fahren
@@ -121,11 +136,23 @@ void loop() {
   Z21::receive();
 
   // Buttons und Drehregler einlesen
-  M5Btn::loop();
-
+//  M5Btn::loop();
+//  ExtBtn::loop();
+  if (ExtBtn::loop() || M5Btn::loop()){
+    lastEvent = millis();
+    if (dunkelSchaltung) M5.Lcd.setBrightness(screenHell);
+    dunkelSchaltung = false;
+  }
+  // Dunkelschaltung
+  if (millis() - lastEvent > EVENT_CHECK_CYCLE && !dunkelSchaltung) {
+    M5.Lcd.setBrightness(screenDunkel);
+    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS    
+    dunkelSchaltung = true;
+  }
   // Batteriestatus lesen
   if (millis() - lastCheck > BAT_CHECK_CYCLE) {
     lastCheck = millis();
     Page::batterie = M5.Power.getBatteryLevel();
   }
+
 }

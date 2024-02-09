@@ -79,6 +79,8 @@ class Page : public Z21Observer {
         static int fgColor;
         static int batterie;
 
+        static bool reInit; // Initialisierung nötig
+
   protected:
 
     virtual void focusChanged() {};

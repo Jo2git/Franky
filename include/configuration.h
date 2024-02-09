@@ -40,21 +40,23 @@
 #define colorDigiStationDisconnected TFT_BLUE // Zwar mit WLAN, aber nicht mit Z21 verbunden
 #define colorTrackPowerOff TFT_ORANGE // Zwar mit WLAN/Z21 verbunden, aber Gleisspannung aus
 #define colorEmergencyStop TFT_GREENYELLOW // Zwar mit WLAN/Z21 verbunden, aber Nothalt
-#define colorAllConnected TFT_DARKGREEN // Alles verbunden
+#define colorProgMode TFT_PURPLE // Zentrale im Programmiermodus
+#define colorShortCircuit TFT_MAGENTA // Kurzschluss
+#define colorAllConnected TFT_DARKGREEN // Alles verbunden und fahrbereit
 
-// Programmiermodus
-#define colorProgMode TFT_PURPLE // Balkenfarbe im Programmiermodus
-#define colorValueOK TFT_GREEN // CV-Ergebnis ok
-#define colorValueNOK TFT_RED // CV-Ergebnis nicht erhalten
 
+#define BAT_CHECK_CYCLE 900000 // Zyklus Batterietest [ms]
+#define EVENT_CHECK_CYCLE 300000 // Zyklus Bedienertest [ms]
+
+#define screenDunkel 5
+#define screenHell 80
+#define screenAbgedunkelt 40
 
 // ----------------------------------------------------------------------------------------------------
 // Loksteuerung
-
 #define MAX_LOCO_CHANNELS 5 // maximale Lokkanäle (eigentlich eigentständige Seiten), muss ungerade sein
 #define MAX_LOCOS 75 // in gleichzeitiger Steuerung mögliche Lokzahl. Erhöhung nur mit Bedacht, kleiner 67000 Heapgröße bringt Abstürze!
 #define LOCO_CYCLE 250 // Zyklus, alle wieviel ms die Lokbeschleunigung ausgerechnet wird
-#define BAT_CHECK_CYCLE 900000 // Zyklus Batterietest [ms]
 
 #define COLOR_ACCELERATING TFT_DARKGREEN
 #define COLOR_DECELERATING TFT_RED

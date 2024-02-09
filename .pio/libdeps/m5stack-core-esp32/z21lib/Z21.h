@@ -79,6 +79,9 @@ class Z21 {
 	// Gleisspannung ein/aus
 	static void LAN_X_SET_TRACK_POWER(boolean on);
 
+	// Not-Halt
+	static void LAN_X_SET_STOP() ;
+
 	// Zubehör schalten
 	static void LAN_X_SET_TURNOUT(int addr, bool plus);
 	
@@ -88,8 +91,6 @@ class Z21 {
 	// Lok mit Adresse <adr> fahren in Richtung <dir> und mit Geschwindigkeit <speed>
 	static void LAN_X_SET_LOCO_DRIVE(int addr, Direction dir, int speed);
 	
-	// Loknothalt
-	static void LAN_X_SET_STOP() ;
 	
 	static void locoStop(int addr, Direction dir);
 	

@@ -77,7 +77,7 @@ String htmlPageReplace(String var) {
     return Z21::flagsValid ? "" : "(noch nicht ausgelesen)";
 
   } else if (var == "HIDE_FLAGS") {
-    return Z21::flagsValid ? "block" : "none";
+    return Z21::flagsValid ? "block" : "none"; 
 
   } else if (var == "BCF_BASIC") {
     return yesno("BCF_BASIC", Z21::BCF_BASIC);
@@ -113,18 +113,21 @@ String htmlPageReplace(String var) {
     return yesno("BCF_LNFB", Z21::BCF_LNFB);
 
   } else if (var == "LOCOLIB") {
-    String result =
+    String result = 
     "<table class=\"w3-table-all w3-hoverable\">"
     "<thead><tr class=\"w3-teal\">"
     "<th class=\"w3-right-align\">Index</th>"
     "<th class=\"w3-right-align\">Adresse</th>"
     "<th>Bezeichnung</th>"
     "<th>Decoder</th>"
-    "<th class=\"w3-right-align\">Beschleunigungsrate</th>"
-    "<th class=\"w3-right-align\">Bremsrate</th>"
+    "<th class=\"w3-right-align\">Acc</th>"
+    "<th class=\"w3-right-align\">Dec</th>"
     "<th class=\"w3-right-align\">vmax</th>"
-    "<th class=\"w3-right-align\">höchste belegte Funktionsnummer</th>"
+    "<th class=\"w3-right-align\">Funkt.max</th>"
     "<th>Funktionsdefinitionen</th>"
+    "<th>Taster 1 -> FNr.</th>"
+    "<th>Taster 2 -> FNr.</th>"
+    "<th>Taster 3 -> FNr.</th>"
     "</tr></thead>";
     for (int i=0; i<MAX_LOCOS; i++) {
       if (Loco::loco[i] != 0) {
@@ -138,16 +141,19 @@ String htmlPageReplace(String var) {
         "<td>" + String(Loco::loco[i]->getVmax()) + "</td>"
         "<td>" + String(Loco::loco[i]->getNumFct()) + "</td>"
         "<td>" + Loco::loco[i]->fctSpec + "</td>"
+        "<td>" + (Loco::loco[i]->getS0()>=0 ? String(Loco::loco[i]->getS0()):"")+ "</td>"
+        "<td>" + (Loco::loco[i]->getS1()>=0 ? String(Loco::loco[i]->getS1()):"")+ "</td>"
+        "<td>" + (Loco::loco[i]->getS2()>=0 ? String(Loco::loco[i]->getS2()):"")+ "</td>"
         "</tr>";
       }
     }
     result += "</table>";
     return result;
-
+  
   } else if (var == "MAX_LOCO_LIB_SIZE") {
     return String(MAX_LOCOS);
   }
-
+  
   return "";
 }
 
@@ -157,13 +163,13 @@ void wsReceived(String received) {
   int n=split(received, '|', elements);
 
   if (elements[0] == "pomWrite") {
-    // M5Btn::ledRing(200, 200, 200,  20);
+    // M5Btn::ledRing(200, 200, 200,  20); 
     Z21::LAN_X_CV_POM_WRITE_BYTE(elements[1].toInt(), elements[2].toInt(), elements[3].toInt());
 
   } else if (elements[0] == "cvWrite") {
     // Z21::LAN_X_CV_WRITE(elements[1].toInt(), elements[2].toInt());
-    M5Btn::ledRing(200, 200, 200,  20);
+    M5Btn::ledRing(200, 200, 200,  20); 
   }
 
-
+  
 }
