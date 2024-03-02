@@ -80,6 +80,7 @@ void Webserver::webconfig() {
       "<tr><td>alternatives WLAN</td></tr>"
       "<tr><td>SSID</td><td><input type=\"text\" name=\"ssid2\" value=\"" + Pref::get(prefNameSSID2) + "\"></td></tr>"
       "<tr><td>Passwort</td><td><input type=\"text\" name=\"password2\" value=\"" + Pref::get(prefNamePasswd2) + "\"></td></tr>"
+      "<tr><td>Z21-Adresse</td><td><input type=\"text\" name=\"z21addr2\" value=\"" + Pref::get(prefNameZ21IPAddr2, Z21_DEFAULT_ADDR) + "\"></td></tr>"
       "<tr><td><input type=\"submit\" value=\"Speichern\"></td><td></td></tr>"
       "</table>"
       "<p/>"
@@ -100,7 +101,7 @@ void Webserver::webconfig() {
               Pref::set(prefNameSSID, ssid);
               credentialsChanged = true;
           }
-      } 
+      }
       if (request->hasParam("password")) {
           passwd = request->getParam("password")->value();
           Serial.printf("password: %s\n", passwd.c_str());
@@ -108,12 +109,12 @@ void Webserver::webconfig() {
               Pref::set(prefNamePasswd, passwd);
               credentialsChanged = true;
           }
-      } 
+      }
       if (request->hasParam("z21addr")) {
           z21addr = request->getParam("z21addr")->value();
           Serial.printf("z21addr: %s\n", z21addr.c_str());
           Pref::set(prefNameZ21IPAddr, z21addr);
-      } 
+      }
       if (request->hasParam("ssid2")) {
           ssid = request->getParam("ssid2")->value();
           Serial.printf("SSID2: %s\n", ssid.c_str());
@@ -121,7 +122,7 @@ void Webserver::webconfig() {
               Pref::set(prefNameSSID2, ssid);
               credentialsChanged = true;
           }
-      } 
+      }
       if (request->hasParam("password2")) {
           passwd = request->getParam("password2")->value();
           Serial.printf("password2: %s\n", passwd.c_str());
@@ -129,18 +130,18 @@ void Webserver::webconfig() {
               Pref::set(prefNamePasswd2, passwd);
               credentialsChanged = true;
           }
-      } 
+      }
 
       M5.lcd.fillScreen(TFT_BLUE);
       M5.lcd.setTextColor(TFT_WHITE);
       M5.lcd.setTextDatum(CC_DATUM);
       M5.lcd.drawString("3", TFT_W / 2, TFT_H * 0.20, 8);
-      M5.lcd.drawString("Konfigurationsdaten erhalten" + String(credentialsChanged ? " - Neustart" : ""), 
+      M5.lcd.drawString("Konfigurationsdaten erhalten" + String(credentialsChanged ? " - Neustart" : ""),
           TFT_W / 2, TFT_H * 0.80, 2);
-  
+
       String message = "Daten empfangen. "
           + String(credentialsChanged ? "Neustart, da sich WLAN-Daten ge&auml;ndert haben." : "");
-      request->send(200, "text/html", 
+      request->send(200, "text/html",
           "<style>"
           "html { font-family: Helvetica; }"
           "body { background-color: #0000FF; color: #FFFFFF; }"
@@ -155,7 +156,7 @@ void Webserver::webconfig() {
 //  WiFi.mode(WIFI_MODE_APSTA); // AP = Access Point, STA = Station Mode
   String index = Pref::get(prefNameFrankyIndex, "");
   if (index == "0") index = "";
-  WiFi.setHostname((HOST_NAME + index).c_str()); 
+  WiFi.setHostname((HOST_NAME + index).c_str());
   inAPMode = true;
 
   String ssid = Pref::get(prefNameSSID); ssid.trim();
@@ -181,11 +182,11 @@ void Webserver::webconfig() {
       M5.lcd.drawString(String(PRODUCT_NAME) + " " + PRODUCT_VERSION, TFT_W / 2, TFT_H * 0.15, 4);
       M5.lcd.drawString(__DATE__ " " __TIME__, TFT_W / 2, TFT_H * 0.25, 2);
       M5.lcd.drawString("Verbinde mit WLAN SSID(s):", TFT_W / 2, TFT_H * 0.40, 2);
-      M5.lcd.drawString(ssid + (ssid2 == "" ? "" : " oder "), TFT_W / 2, TFT_H * 0.60, 4); 
+      M5.lcd.drawString(ssid + (ssid2 == "" ? "" : " oder "), TFT_W / 2, TFT_H * 0.60, 4);
       if (ssid2 != "") M5.lcd.drawString(ssid2, TFT_W / 2, TFT_H * 0.70, 4);
 
 
-      int connCount = 10; int pixels=30; 
+      int connCount = 10; int pixels=30;
       // while (WiFi.waitForConnectResult() != WL_CONNECTED && connCount > 0) { // scheint dann nie Countdown auszulösen
       while (wifiMulti.run() != WL_CONNECTED && connCount > 0) {
           M5.lcd.fillRect(0, TFT_H * 0.80 - pixels/2, TFT_W, pixels, TFT_BLUE);
@@ -213,7 +214,7 @@ void Webserver::webconfig() {
           inAPMode = true;
       }
   }
-  
+
   // Keine WLAN-Daten (beim allerersten Start), Access Point einrichten
   if (inAPMode) {
 
@@ -332,7 +333,7 @@ String Webserver::processor(const String& var) {
     // einzelne Menüeinträge
     for (int i = 0; i < numPages; i++) {
       if (page[i].anchor == LastPageMarker) break;
-      
+
       String realURL = page[i].url == "ota" ? "update" : page[i].url;
       if (page[i].anchor != "") {
         menu += "<a href=\"" + realURL + "\" class=\"w3-btn w3-round-large w3-teal w3-hover-gray\">" + page[i].anchor + "</a> ";
@@ -521,7 +522,7 @@ void Webserver::onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, 
     char* buf = new char[len + 1];
     memcpy(buf, data, len);
     buf[len] = 0;
-    String received = String(buf);   
+    String received = String(buf);
     String elements[10];
 
     // "purge" -> Preferences löschen
