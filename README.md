@@ -31,3 +31,6 @@ wesentliche Änderungen zum Original:
 	- PIN26
        - kurz => Funktionstasten blättern vor
        - lang => Funktionstasten blättern zurück
+
+02.03.2024
+- zum alternativen WLAN gibt es jetzt auch eine alternative Z21-Adresse

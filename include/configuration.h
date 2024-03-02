@@ -78,6 +78,7 @@
 
 #define prefNameLocoChannelAddr "chAddr"
 #define prefNameZ21IPAddr "z21IPAddr"
+#define prefNameZ21IPAddr2 "z21IPAddr2"
 #define prefNamePOAPIKey "poAPIToken"
 #define prefNamePOUserKey "poUserKey"
 

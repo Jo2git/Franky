@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------------------------------
 // Webserver und Netzwerk
 
-#include <WiFi.h>        
+#include <WiFi.h>
 #include "Webserver.h"
 WiFiUDP Udp;
 
@@ -53,7 +53,7 @@ void setup() {
   M5.Lcd.setBrightness(screenHell);
 
   //externe Taster
-  
+
   ExtBtn::begin();
 
   // Filesystem
@@ -67,18 +67,41 @@ void setup() {
   // Kommentare entfernen, um für Testzwecke AP-Modus zu erzwingen:
   // Pref::set(prefNameSSID, "");
   // Pref::set(prefNamePasswd, "");
-  Webserver::webconfig(); 
+  Webserver::webconfig();
   while (!Webserver::wlConnected){};
   delay(1000);
-  
-  // Z21-Adresse bekanntgeben (kann über Webserver geändert werden)
-  Z21::setIPAddress(Pref::get(prefNameZ21IPAddr, Z21_DEFAULT_ADDR));
+
+// Adressen zerlegen für Netzkontrolle
+  IPAddress ip = WiFi.localIP();
+  String tempAdr, tempAdr2;
+  byte ADDR[4], ADDR2[4];
+  char adresse[15], adresse2[15];
+
+  tempAdr = Pref::get(prefNameZ21IPAddr, Z21_DEFAULT_ADDR);
+  tempAdr2 = Pref::get(prefNameZ21IPAddr2, Z21_DEFAULT_ADDR);
+
+  tempAdr.toCharArray(adresse, 15);
+  ADDR[0] = atoi(strtok(adresse, ".")); // Übernehme bis Trennzeichen 1
+  ADDR[1] = atoi(strtok(NULL, "."));
+  ADDR[2] = atoi(strtok(NULL, "."));
+  ADDR[3] = atoi(strtok(NULL, "."));
+
+  tempAdr2.toCharArray(adresse2, 15);
+  ADDR2[0] = atoi(strtok(adresse2, ".")); // Übernehme bis Trennzeichen 1
+  ADDR2[1] = atoi(strtok(NULL, "."));
+  ADDR2[2] = atoi(strtok(NULL, "."));
+  ADDR2[3] = atoi(strtok(NULL, "."));
+
+  // Z21-Adresse bekanntgeben (kann über Webserver geändert werden) nur wenn Adresse im WLAN-Subnetz ist
+  if (ip[0]==ADDR[0] && ip[1]==ADDR[1] && ip[2]==ADDR[2]) Z21::setIPAddress(tempAdr);
+  else if (ip[0]==ADDR2[0] && ip[1]==ADDR2[1] && ip[2]==ADDR2[2]) Z21::setIPAddress(tempAdr2);
+  else while(1);  // keine Zentrale im WLAN adressiert
 
   // Adressoffset, falls Gerds Gleisbox?
   Z21::setAddrOffs(Pref::get(prefNameGerdOffs, "off") == "on" ? 0x2000 : 0);
 
   // GUI initialisieren
-  Page::begin(&M5.lcd); 
+  Page::begin(&M5.lcd);
   if (!Page::isBlocked()) Page::currentPage()->setVisible(true, true);
 
   Serial.printf("Heapauslastung zu Beginn: %d Byte\n", ESP.getFreeHeap());
@@ -107,14 +130,11 @@ void loop() {
       UDPServerInitialised = true;
       Z21::init();
       delay(100);
-      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist! 
+      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist!
     }
 
     if (initState && UDPServerInitialised) Z21::LAN_X_GET_STATUS(); initState = false; // einmalig Status einlesen
   }
-
-  
-
 
   if (millis() - lastHeartbeatSent > Z21_HEARTBEAT) {
     Z21::heartbeat();
@@ -146,7 +166,7 @@ void loop() {
   // Dunkelschaltung
   if (millis() - lastEvent > EVENT_CHECK_CYCLE && !dunkelSchaltung) {
     M5.Lcd.setBrightness(screenDunkel);
-    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS    
+    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
     dunkelSchaltung = true;
   }
   // Batteriestatus lesen

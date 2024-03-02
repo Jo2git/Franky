@@ -1,6 +1,6 @@
 %MENU%
 
-<div class="w3-panel w3-gray"><h1>Einstellungen</h1></div> 
+<div class="w3-panel w3-gray"><h1>Einstellungen</h1></div>
 
 <p>%BTN_Speichern%  %BTN_Reboot% %BTN_Reset% (löscht alle Konfigurationswerte ohne Nachfrage!) </p>
 
@@ -25,6 +25,7 @@
 		<div class="w3-container w3-leftalign">
 			<ul class="w3-ul w3-hoverable">
 			<li>Z21-Adresse: %PREF_text:15:15_z21IPAddr% mit Port %Z21_PORT%</li>
+			<li>alternative Z21-Adresse: %PREF_text:15:15_z21IPAddr2% mit Port %Z21_PORT%</li>
 			<li>%PREF_checkbox:1:1_GerdOffs% "Gerd-Offset" (Wenn <a href="https://www.stummiforum.de/viewtopic.php?f=7&t=160368&p=2201757&hilit=0x007f#p2201757">Gerds Gleisbox</a> verwendet wird, addiert Franky 0x2000 zur Adresse - erfordert Neustart.)</li>
 			</ul>
 		</div>
@@ -48,10 +49,10 @@
 	<div class="w3-card-4">
 		<div class="w3-container w3-leftalign">
 			<ul class="w3-ul w3-hoverable">
-			<li>Uhrzeit <input id="modelTime" type="time" maxlength="5" size="6" value="%modelTime%" onchange="confirmChange('modelTime')"/> 
-			    - Zeitraffungsfaktor <input id="modelTimeScale" type="number" maxlength="2" size="2" min="1" max="12" value="%modelTimeScale%" onchange="confirmModelTimeChange('modelTimeScale', 'modelTimeScaleComputed')" /> <font id="modelTimeScaleComputed"></font></li>			
-			<li><input id="minuteBeep" type="checkbox" value="%minuteBeep%"/>  Tonsignal jede Minute, Frequenz 
-			    <input type="text" maxlength="4" size="2"/>Hz, Dauer <input type="text" maxlength="4" size="2"/>ms</li>	
+			<li>Uhrzeit <input id="modelTime" type="time" maxlength="5" size="6" value="%modelTime%" onchange="confirmChange('modelTime')"/>
+			    - Zeitraffungsfaktor <input id="modelTimeScale" type="number" maxlength="2" size="2" min="1" max="12" value="%modelTimeScale%" onchange="confirmModelTimeChange('modelTimeScale', 'modelTimeScaleComputed')" /> <font id="modelTimeScaleComputed"></font></li>
+			<li><input id="minuteBeep" type="checkbox" value="%minuteBeep%"/>  Tonsignal jede Minute, Frequenz
+			    <input type="text" maxlength="4" size="2"/>Hz, Dauer <input type="text" maxlength="4" size="2"/>ms</li>
 			</ul>
 			</ul>
 		</div>
@@ -63,7 +64,7 @@
 	<div class="w3-card-4">
 		<div class="w3-container w3-leftalign">
 			<ul class="w3-ul w3-hoverable">
-			<li>API Token %PREF_text:30:30_poAPIToken%</li> 
+			<li>API Token %PREF_text:30:30_poAPIToken%</li>
 			<li>API User Key %PREF_text:30:30_poUserKey%</li>
 			</ul>
 			<a href="https://pushover.net/">https://pushover.net/</a>
