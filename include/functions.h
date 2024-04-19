@@ -15,7 +15,7 @@
 #define FN_TRACKPOWER "Gleisspng."
 
 // Spitzenbeleuchtung ein/aus (toggeln)
-#define FN_HEADLIGHTS "Licht"
+#define FN_HEADLIGHTS "Licht FS1"
 
 // Lokkanäle durchschalten
 #define FN_CHANNELS_PLUS "Kanal+"

@@ -48,6 +48,7 @@ class Widget {
     int fgColor = TFT_WHITE;
     int bgColor = TFT_BLACK;
     int focusColor = TFT_YELLOW;
+    int rearColor = TFT_RED;
 
     // Für Buttons, die Zustand repräsentieren
     bool selected = false;

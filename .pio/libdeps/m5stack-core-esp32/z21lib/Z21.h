@@ -18,7 +18,7 @@
 #include <WiFi.h>
 
 #define MaxObservers 20
-#define MaxFct 28
+#define MaxFct 31
 
 class Z21 {
 

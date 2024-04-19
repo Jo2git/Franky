@@ -562,7 +562,7 @@ void Z21::receive() {
 
         switch (buf[4]) {
           case 0x00: hwVersion = "Z21 schwarz (alt)"; break;
-          case 0x01: hwVersion = "Z21 schwarz oder DR5000"; break;
+          case 0x01: hwVersion = "Z21 schwarz oder Alternative"; break;
           case 0x02: hwVersion = "Smartrail"; break;
           case 0x03: hwVersion = "Z21 weisz"; break;
           case 0x04: hwVersion = "Z21 Start"; break;
@@ -618,6 +618,10 @@ void Z21::receive() {
         for (int i = 21; i <= 28; i++) {
           f[i] = (buf[12] & 0b00000001) > 0;
           buf[12] = buf[12] >> 1;
+        }
+        for (int i = 29; i <= 31; i++) {
+          f[i] = (buf[13] & 0b00000001) > 0;
+          buf[13] = buf[13] >> 1;
         }
 
         String functions = "";

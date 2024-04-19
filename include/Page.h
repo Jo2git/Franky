@@ -91,7 +91,7 @@ class Page : public Z21Observer {
     static bool blocked;
 
     int numSoftkeys=0;
-    #define MAX_SOFT_KEYS (NumHwButtons*2*2 + MaxFct/4*NumHwButtons*2) // erster Teil: zwei Bedienebenen mit je 2*3 Softkeys. Zweiter Teil: Funktionen erfordern jede eine Softkey plus Navigationstasten
+    #define MAX_SOFT_KEYS (NumHwButtons*2*2 + (MaxFct+3)/4*NumHwButtons*2) // erster Teil: zwei Bedienebenen mit je 2*3 Softkeys. Zweiter Teil: Funktionen erfordern jede eine Softkey plus Navigationstasten
     Softkey* softkeys[MAX_SOFT_KEYS]; 
 
     // Buttons in Abhängigkeit vom Modus neu setzen, dabei ist <level> die Buttonebene (Umschalten wie eine Art Shift-Taste)

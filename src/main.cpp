@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------------------------------
 // Webserver und Netzwerk
 
-#include <WiFi.h>
+#include <WiFi.h>        
 #include "Webserver.h"
 WiFiUDP Udp;
 
@@ -53,7 +53,7 @@ void setup() {
   M5.Lcd.setBrightness(screenHell);
 
   //externe Taster
-
+  
   ExtBtn::begin();
 
   // Filesystem
@@ -67,7 +67,7 @@ void setup() {
   // Kommentare entfernen, um für Testzwecke AP-Modus zu erzwingen:
   // Pref::set(prefNameSSID, "");
   // Pref::set(prefNamePasswd, "");
-  Webserver::webconfig();
+  Webserver::webconfig(); 
   while (!Webserver::wlConnected){};
   delay(1000);
 
@@ -101,7 +101,7 @@ void setup() {
   Z21::setAddrOffs(Pref::get(prefNameGerdOffs, "off") == "on" ? 0x2000 : 0);
 
   // GUI initialisieren
-  Page::begin(&M5.lcd);
+  Page::begin(&M5.lcd); 
   if (!Page::isBlocked()) Page::currentPage()->setVisible(true, true);
 
   Serial.printf("Heapauslastung zu Beginn: %d Byte\n", ESP.getFreeHeap());
@@ -130,11 +130,14 @@ void loop() {
       UDPServerInitialised = true;
       Z21::init();
       delay(100);
-      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist!
+      Z21::LAN_X_GET_LOCO_INFO(LocoPage::currentLoco()->getAddr()); // beim Einschalten Status der aktiven Lok angefordern, da sie noch nicht abboniert ist! 
     }
 
     if (initState && UDPServerInitialised) Z21::LAN_X_GET_STATUS(); initState = false; // einmalig Status einlesen
   }
+
+  
+
 
   if (millis() - lastHeartbeatSent > Z21_HEARTBEAT) {
     Z21::heartbeat();
@@ -166,7 +169,7 @@ void loop() {
   // Dunkelschaltung
   if (millis() - lastEvent > EVENT_CHECK_CYCLE && !dunkelSchaltung) {
     M5.Lcd.setBrightness(screenDunkel);
-    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
+    M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS    
     dunkelSchaltung = true;
   }
   // Batteriestatus lesen

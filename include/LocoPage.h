@@ -74,7 +74,8 @@ class LocoPage: public Page, public Z21Observer {
     Numberbox* addr[MAX_LOCO_CHANNELS]; 
     Textbox* locoInfo;
     Symbolbox* direction;
-    Symbolbox* headlights;
+    Symbolbox* headLights;
+    Symbolbox* rearLights;
     Numberbox* speed;
     Numberbox* targetSpeed;
     Numberbox* tachoSpeed;
@@ -82,12 +83,15 @@ class LocoPage: public Page, public Z21Observer {
     // Modi
     bool driveManually = false; // Fahrmodus. true: manuell fahren, false: automatisch bremsen/beschleunigen
     bool inLibMode = false; // Librarymodus
+    bool useExtBtn = false; // Navigation mit ext. Tasten (seitlich)
+    bool useAdvLigths = false; // Erweiterte Lichttanzeige (FS1/FS2 - ws/rt )
 
     // Bestimmte Softkeys, auf die gesondert zugegriffen wird
     int firstFunctionSoftkeyIndex; // Softkeyindex der ersten Funktionstaste 
     Softkey* addrStepsSoftKey; // Softkey, mit der Adressschrittweiten ausgewählt werden kann. Wird nur angezeigt, wenn selectKnownAddresses = false
     Softkey* drivingModeSoftkey; // manuell/automatisch
     Softkey* libModeSoftkey; // Bibliotheksmodus 
+    Softkey* headLightsSoftkey; // Frontlichter
     int firstDeltaKey, lastDeltaKey; // Index erste und letzte Softkey für Adressdeltaänderung
 
     void dump(char* message);
