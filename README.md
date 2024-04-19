@@ -34,3 +34,14 @@ wesentliche Änderungen zum Original:
 
 02.03.2024
 - zum alternativen WLAN gibt es jetzt auch eine alternative Z21-Adresse
+
+19.04.2024
+- Einstellbare Optionen
+  - Navigation nur mit ext. Tastern
+	- Funktionstasten- und Kanalnavigation nur mit ext. Tastern
+  	- Drehknopf ohne Not-Halt- u. Gleisspannungsschaltung
+  - Funktionserweiterung bis F31
+  - Erweiterte Lichtanzeige
+	- F0	Licht vorn ws/rt   (fahrtrichtungsabhängig)
+	- F1	Licht hinten rt/ws (fahrtrichtungsabhängig)
+	- F3(Rangiergang) + F0/F1  Licht vorn/hinten ws
