@@ -25,9 +25,12 @@ Widget* Symbolbox::setVisible(bool visible) {
             if (value) {
                 tft->fillCircle(x, y, width/2, fgColor);
             } else {
-                tft->fillCircle(x, y, width/2, bgColor);
+                tft->fillCircle(x, y, width/2, rearColor);
             }
         }
+    }
+    else if ((style & CIRCLE_FILLEDEMPTY)) {
+        tft->fillCircle(x, y, width/2, bgColor);
     }
     return this;
 }

@@ -4,6 +4,7 @@
 #include <Z21.h>
 #include "configuration.h"
 #include "Locofunction.h"
+#include "Pref.h"
 
 #define MaxFst 126
 #define Fst1 MaxFst/4 + 1
@@ -81,7 +82,7 @@ class Loco {
     int acc = 5;
     int dec =5;
     int vmax = 0;
-    int numFct = MaxFct;
+    int numFct = (Pref::get(prefNameFkt31, "off") == "on") ? MaxFct : 28;
     Locofunction* fct[MaxFct+1];
     int s0 = -1;
     int s1 = -1;

@@ -32,16 +32,6 @@ Loco* LocoPage::selectedLoco;
 #define BTNSIZE 30
 #define DIAMETER 20
 
-/* wird scheinbar nicht gebraucht
-int fctIndexToSoftkeyIndex(int fctIndex) {
-  if (fctIndex >= 1 and fctIndex <= 4) return fctIndex + 1;
-  if (fctIndex >= 5 and fctIndex <= 8) return fctIndex + 3;
-  if (fctIndex >= 9 and fctIndex <= 12) return fctIndex + 5;
-  if (fctIndex >= 13 and fctIndex <= 16) return fctIndex + 7;
-  if (fctIndex >= 17 and fctIndex <= 20) return fctIndex + 9;
-  if (fctIndex >= 21 and fctIndex <= 24) return fctIndex + 11;
-  if (fctIndex >= 25 and fctIndex <= 28) return fctIndex + 13;
-}*/
 LocoPage::LocoPage(char navigable) : Page(navigable) {
 
   for (int i=0; i<MAX_LOCO_CHANNELS; i++) {
@@ -58,8 +48,9 @@ LocoPage::LocoPage(char navigable) : Page(navigable) {
   widgets[numWidgets++] = targetSpeed = new Numberbox(tft, 0, "%d", 8, 0, 0, 126, TFT_W - BORDER_RIGHT, TFT_H/2, MR_DATUM, 4);
   targetSpeed->setIncrement(10);
   widgets[numWidgets++] = tachoSpeed = new Numberbox(tft, 0, "%d", 8, 0, 0, 600, TFT_W - BORDER_RIGHT, TFT_H/2 + 32, MR_DATUM, 4);
-  widgets[numWidgets++] = direction = new Symbolbox(tft, TRIANGLE_UPDOWN | NOAUTOFOCUS, false, BTNSIZE, BTNSIZE, BORDER_LEFT + BTNSIZE, TFT_H/2 - 20);
-  widgets[numWidgets++] = headlights = new Symbolbox(tft, CIRCLE_FILLEDEMPTY | NOAUTOFOCUS, true, DIAMETER, DIAMETER, BORDER_LEFT + BTNSIZE, TFT_H/2 + 20);
+  widgets[numWidgets++] = direction = new Symbolbox(tft, TRIANGLE_UPDOWN | NOAUTOFOCUS, false, BTNSIZE, BTNSIZE, BORDER_LEFT + BTNSIZE, TFT_H/2);
+  widgets[numWidgets++] = headLights = new Symbolbox(tft, CIRCLE_FILLEDEMPTY | NOAUTOFOCUS, true, DIAMETER, DIAMETER, BORDER_LEFT + BTNSIZE, TFT_H/2 - 40);
+  widgets[numWidgets++] = rearLights = new Symbolbox(tft, CIRCLE_FILLEDEMPTY | NOAUTOFOCUS, true, DIAMETER, DIAMETER, BORDER_LEFT + BTNSIZE, TFT_H/2 + 40);
 
   for (int i=0; i<MAX_LOCO_CHANNELS; i++) {
     widgets[numWidgets++] = addr[i] = new Numberbox(tft, NOAUTOFOCUS, "%d", 12, Pref::get(prefNameLocoChannelAddr + String(i), String(i+1)).toInt(), 1, MaxLocoAddr, TFT_W*(2*i+1)/10, BORDER_TOP, TC_DATUM, 4);
@@ -67,14 +58,23 @@ LocoPage::LocoPage(char navigable) : Page(navigable) {
 
   for (int i=numSoftkeys; i<MAX_SOFT_KEYS; i++) softkeys[i] = 0;
 
+  useExtBtn = Pref::get(prefNameExtButton, "off") == "on";
+  useAdvLigths = Pref::get(prefNameAdvLigth, "off") == "on";
+
+if(useExtBtn) {
   // Softkeys Ebene 0
-  softkeys[numSoftkeys++] = new Softkey(tft, 0, FN_HEADLIGHTS, M5Btn::A, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  softkeys[numSoftkeys++] = drivingModeSoftkey = new Softkey(tft, 0, FN_DRIVE_AUTO, M5Btn::C, LAYER0, TFT_WHITE, TFT_DARKGREY, TFT_BLACK);
+  softkeys[numSoftkeys++] = libModeSoftkey = new Softkey(tft, 0, FN_CHANGE_ADDR, M5Btn::CC, LAYER0, TFT_WHITE, TFT_DARKGREY, TFT_BLACK);
+} else {
+  // Softkeys Ebene 0
+  if(useAdvLigths) softkeys[numSoftkeys++] = new Softkey(tft, 0, FN_HEADLIGHTS, M5Btn::A, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  else softkeys[numSoftkeys++] = new Softkey(tft, 0, "Licht", M5Btn::A, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   softkeys[numSoftkeys++] = drivingModeSoftkey = new Softkey(tft, 0, FN_DRIVE_AUTO, M5Btn::B, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   softkeys[numSoftkeys++] = new Softkey(tft, 0, FN_CHANNELS_PLUS, M5Btn::C, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   softkeys[numSoftkeys++] = addrStepsSoftKey = new Softkey(tft, 0, CAPTION_UP, M5Btn::AA, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   softkeys[numSoftkeys++] = libModeSoftkey = new Softkey(tft, 0, FN_CHANGE_ADDR, M5Btn::BB, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   softkeys[numSoftkeys++] = new Softkey(tft, 0, FN_CHANNELS_MINUS, M5Btn::CC, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
-
+}
   // Softkeys Ebene 1 - nur für Adressschritte
   softkeys[firstDeltaKey = numSoftkeys++] = new Softkey(tft, 0, "1", M5Btn::A, LAYER1, TFT_WHITE, TFT_BLUE, TFT_BLACK);
   (softkeys[numSoftkeys++] = new Softkey(tft, 0, INITIAL_DELTA, M5Btn::B, LAYER1, TFT_WHITE, TFT_BLUE, TFT_BLACK))->setActivated(true);
@@ -84,7 +84,6 @@ LocoPage::LocoPage(char navigable) : Page(navigable) {
   softkeys[lastDeltaKey = numSoftkeys++] = new Softkey(tft, 0, "500", M5Btn::CC, LAYER1, TFT_WHITE, TFT_BLUE, TFT_BLACK);
 
   firstFunctionSoftkeyIndex = numSoftkeys;
-  setFunctionSoftkeys();
 
   // Modi
   inLibMode = Pref::get(prefNameLocoLib, "off") == "on";
@@ -100,6 +99,8 @@ LocoPage::LocoPage(char navigable) : Page(navigable) {
     targetSpeed->setFocus(true);
   }
   addr[channel]->setSelected(true);
+
+  setFunctionSoftkeys();
 
   // Etc
 
@@ -122,8 +123,39 @@ void LocoPage::setFunctionSoftkeys() {
   }
 
   int l=1;
-  // Ab Ebene 2 Funktionstasten
 
+if (useExtBtn){
+  if(useAdvLigths) softkeys[numSoftkeys++] = headLightsSoftkey = new Softkey(tft, 0, FN_HEADLIGHTS, M5Btn::AA, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  else softkeys[numSoftkeys++] = headLightsSoftkey = new Softkey(tft, 0, "Licht", M5Btn::AA, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(1)->getShortName(), M5Btn::A, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(2)->getShortName(), M5Btn::B, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(3)->getShortName(), M5Btn::BB, LAYER0, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+  // Ab Ebene 2 Funktionstasten
+  for (int f=4; f <= loco[channel]->getNumFct(); f++) {
+    switch(f%6) {
+      case 4: // neue Seite beginnen (++) Funktionstaste auf A
+        l++;
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::A, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+      case 5:
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::AA, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+      case 0:
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::B, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+      case 1:
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::BB, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+      case 2:
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::C, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+      case 3:
+        softkeys[numSoftkeys++] = new Softkey(tft, 0, loco[channel]->getFct(f)->getShortName(), M5Btn::CC, l, TFT_WHITE, TFT_BLUE, TFT_BLACK);
+        break;
+    }
+  }
+} else {
+  // Ab Ebene 2 Funktionstasten
   for (int f=1; f <= loco[channel]->getNumFct(); f++) {
     switch(f%4) {
       case 1: // neue Seite beginnen (++) -> Navigationstasten und Funktionstaste auf BB
@@ -143,8 +175,9 @@ void LocoPage::setFunctionSoftkeys() {
         break;
     }
   }
+}
   numLayers=l+1;
-  handleAddrStepKey();
+  if(!useExtBtn)  handleAddrStepKey();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -195,7 +228,7 @@ void LocoPage::setVisible(bool visible, bool clearScreen) {
     Z21::LAN_X_GET_LOCO_INFO(addr[channel]->getValue());
   }
   setButtons(layer);
-  addrStepsSoftKey->setVisible(inAddressChangeMode || loco[channel]->getNumFct() != 0);
+  if (!useExtBtn) addrStepsSoftKey->setVisible(inAddressChangeMode || loco[channel]->getNumFct() != 0);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -222,7 +255,7 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
   loco[channel]->takenOver=false; // Steuerung übernehmen
 
   // Not-Halt / Gleisspannung AUS mit Doppeldruck (2-stufig)
-  if (button == M5Btn::RotaryKnobDouble || button == M5Btn::RotaryKnobDoubleLong) {
+  if (!useExtBtn && (button == M5Btn::RotaryKnobDouble || button == M5Btn::RotaryKnobDoubleLong)) {
     if (button == M5Btn::RotaryKnobDoubleLong || Z21::getEmergencyStopState() == BoolState::On) {
       Z21::LAN_X_SET_TRACK_POWER(false);
     } else {
@@ -257,7 +290,7 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
 
     if (focussedWidget() == speed) {
       targetSpeed->setValue(speed->getValue())->setVisible(false);
-      if (speed->getValue() <= MaxFst){               // erstmal als Bastellösung f. H.-J.Rothkötter
+      if (speed->getValue() <= MaxFst){               // erstmal als Bastellösung
         loco[channel]->fst = loco[channel]->targetFst = speed->getValue();
         loco[channel]->speed = speed->getValue();
       }
@@ -269,13 +302,19 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     }
 
   // Licht
-  } else  if (getFunction(button) == FN_HEADLIGHTS) {
-    headlights->toggle();
-    loco[channel]->getFct(0)->setActive(headlights->getValue());
+  } else  if (getFunction(button) == FN_HEADLIGHTS || getFunction(button) == "Licht") {
+      headLights->setValue(direction->getValue()||loco[channel]->getFct(3)->isActive());
+      headLights->setVisible(!loco[channel]->getFct(0)->isActive());
+      loco[channel]->getFct(0)->setActive(!loco[channel]->getFct(0)->isActive());
+
+    if (useAdvLigths && useExtBtn) {
+      headLightsSoftkey->setVisible(true);
+      headLightsSoftkey->setActivated(loco[channel]->getFct(0)->isActive());
+    }
     Z21::LAN_X_SET_LOCO_FUNCTION(loco[channel]->getAddr(), 0, loco[channel]->getFct(0)->isActive());
 
   // Funktionen
-  } else if (layer >= 1 && !inAddressChangeMode && loco[channel]->getFctByName(getFunction(button)) != 0) {
+  } else if (layer != 1 && !inAddressChangeMode && loco[channel]->getFctByName(getFunction(button)) != 0) {
     Softkey* softkey = getSoftkey(getFunction(button));
     softkey->setActivated(!softkey->isActivated())->setVisible(true);
     Locofunction* fct = loco[channel]->getFctByName(getFunction(button));
@@ -283,7 +322,7 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     Z21::LAN_X_SET_LOCO_FUNCTION(addr[channel]->getValue(), fct->getMappedTo(), softkey->isActivated());
 
   // Gleisspannung EIN (Stopp auflösen), wenn notwendig
-  } else if (button == M5Btn::RotaryKnob && (Z21::getTrackPowerState() == BoolState::Off || Z21::getEmergencyStopState() == BoolState::On)) {
+  } else if (button == M5Btn::RotaryKnob && !useExtBtn && (Z21::getTrackPowerState() == BoolState::Off || Z21::getEmergencyStopState() == BoolState::On)) {
     Z21::LAN_X_SET_TRACK_POWER(true);
     Z21::LAN_X_GET_STATUS();
 
@@ -341,35 +380,33 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     targetSpeed->setMaxValue(); loco[channel]->targetFst = targetSpeed->getValue();
     driveLoco();
 
-  // ===================== Ebenen und Inkrementänderung
-
+  // ===================== Ebenenwechsel
   } else if (getFunction(button) == CAPTION_UP || button == M5Btn::extBtnFktUp) {
-    if (!inAddressChangeMode and layer == 0) {
-        layer +=2;
-    } else if (inAddressChangeMode and layer == 1) {
-      layer = 0;
-    } else {
-      layer++;
+    if(inAddressChangeMode) {
+      if (layer == 0 && !inLibMode) layer = 1;
+      else layer = 0;
+    }
+    else {
+      if (layer == 0) layer +=2;
+      else layer++;
     }
     layer = layer % numLayers;
     setButtons(layer);
 
-    if (inAddressChangeMode) {
-      for (int i=0; i<MAX_LOCO_CHANNELS; i++) addr[i]->setIncrement(String(INITIAL_DELTA).toInt());
-    }
-
   } else if (getFunction(button) == CAPTION_DOWN || button == M5Btn::extBtnFktDown) {
-    if (!inAddressChangeMode and layer == 2) {
-      layer = (layer - 2 + numLayers)  % numLayers;
-    } else if (inAddressChangeMode and layer == 0) {
-      layer = 1;
-    } else {
-      for (int i=0; i<MAX_LOCO_CHANNELS; i++) addr[i]->setIncrement(1);
-      layer = (layer - 1 + numLayers)  % numLayers;
-      handleAddrStepKey();
+    if(inAddressChangeMode) {
+      if (layer == 0 && !inLibMode) layer = 1;
+      else layer = 0;
     }
+    else {
+      if (layer == 2) layer = 0;
+      else layer = layer - 1 + numLayers ;
+      if (layer == 1) layer = 0;
+    }
+    layer = layer % numLayers;
     setButtons(layer);
 
+  // ===================== Inkrementänderung
   } else if (
       getFunction(button) == "1" ||
       getFunction(button) == INITIAL_DELTA ||
@@ -386,19 +423,22 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     addr[channel]->increase(incr);
 
   // ===================== andere Tasten
-
-    } else if (getFunction(button) == FN_CHANGE_ADDR) {
-
-      // Sonderfall: wenn bereits im Adressmodus wird Umschalten des Bibliotheksmodus vollzogen ...
-      if (inAddressChangeMode) {
-        inLibMode = !inLibMode;
-        setMinMaxAddr();
-        libModeSoftkey->setActivated(inLibMode)->setVisible(true);
-      } else {
-        inAddressChangeMode = true;
-        addrStepsSoftKey->setVisible(true);
-        focussedWidget()->setFocus(false)->setVisible(true);
-        addr[channel]->setFocus(true)->setVisible(true);
+  } else if (getFunction(button) == FN_CHANGE_ADDR) {
+    // Sonderfall: wenn bereits im Adressmodus wird Umschalten des Bibliotheksmodus vollzogen ...
+    if (inAddressChangeMode) {
+      inLibMode = !inLibMode;
+      setMinMaxAddr();
+      libModeSoftkey->setActivated(inLibMode)->setVisible(true);
+    } else {
+      inAddressChangeMode = true;
+      if(!useExtBtn) addrStepsSoftKey->setVisible(true);
+      focussedWidget()->setFocus(false)->setVisible(true);
+      addr[channel]->setFocus(true)->setVisible(true);
+    }
+    if (inLibMode) for (int i=0; i<MAX_LOCO_CHANNELS; i++) addr[i]->setIncrement(1);
+    else {
+      String initialDelta = INITIAL_DELTA;
+      for (int i=0; i<MAX_LOCO_CHANNELS; i++) addr[i]->setIncrement(initialDelta.toInt());
       }
 
   // Adresskanäle nach rechts durchschalten
@@ -452,7 +492,7 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     driveManually = false;
     drivingModeSoftkey->setActivated(!driveManually)->setVisible(true);
     setButtons(LAYER0);
-    addrStepsSoftKey->setVisible(loco[channel]->getNumFct() != 0);
+    if(!useExtBtn) addrStepsSoftKey->setVisible(loco[channel]->getNumFct() != 0);
 
   // Fahrmodus automatisch -> manuell
   } else if (getFunction(button) == FN_DRIVE_AUTO && !driveManually) {
@@ -465,7 +505,7 @@ void LocoPage::buttonPressed(M5Btn::ButtonType button) {
     driveManually = true;
     drivingModeSoftkey->setActivated(!driveManually)->setVisible(true);
     setButtons(LAYER0);
-    addrStepsSoftKey->setVisible(loco[channel]->getNumFct() != 0);
+    if(!useExtBtn) addrStepsSoftKey->setVisible(loco[channel]->getNumFct() != 0);
   }
 
 }
@@ -486,7 +526,7 @@ void LocoPage::locoChannelChanged(int oldChannel, int channel) {
 
   selectedLoco = loco[channel];
   locoAddressChanged();
-
+  update();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -525,7 +565,16 @@ void LocoPage::update() {
   } else tachoSpeed->setVisible(true, TFT_BLACK); //(false) funktioniert z.Zt. nicht richtig
 
   direction->setValue(loco[channel]->forward)->setVisible(true);
-  headlights->setValue(loco[channel]->getFct(0)->isActive())->setVisible(true);
+  if (useAdvLigths) {
+    headLights->setValue(direction->getValue()||loco[channel]->getFct(3)->isActive());
+    rearLights->setValue(!direction->getValue()||loco[channel]->getFct(3)->isActive());
+    headLights->setVisible(loco[channel]->getFct(0)->isActive()||(loco[channel]->getFct(3)->isActive()&&loco[channel]->getFct(1)->isActive()));
+    rearLights->setVisible(loco[channel]->getFct(1)->isActive()||(loco[channel]->getFct(3)->isActive()&&loco[channel]->getFct(0)->isActive()));
+  } else {
+    headLights->setValue(true);
+    headLights->setVisible(loco[channel]->getFct(0)->isActive());
+    rearLights->setVisible(false);
+  }
 
   // Funktionszustände auf zugehörige Buttons übertragen
   for (int i=1; i<=loco[channel]->getNumFct(); i++) {
@@ -536,6 +585,10 @@ void LocoPage::update() {
         if (layer == softkeys[j]->getLayer()) softkeys[j]->setVisible(true);
       }
     }
+  }
+  if (useExtBtn && useAdvLigths && layer == 0) {
+    headLightsSoftkey->setVisible(true);
+    headLightsSoftkey->setActivated(loco[channel]->getFct(0)->isActive());
   }
 
   if (loco[channel]->takenOver) {
@@ -554,6 +607,7 @@ void LocoPage::update() {
 // ... durch Notifikation der Zentrale
 
 void LocoPage::locoInfoChanged(int address, Direction dir, int fst, bool takenOver, int numSpeedSteps, bool f[]) {
+  int maxFct = (Pref::get(prefNameFkt31, "off")) ? MaxFct : 28;
 
   if (!visible) return;
 
@@ -567,7 +621,7 @@ void LocoPage::locoInfoChanged(int address, Direction dir, int fst, bool takenOv
       loco[channel]->speed = fst;
       loco[channel]->fst = fst;
     }
-    for (int j=0; j<MaxFct+1; j++)  {
+    for (int j=0; j<maxFct+1; j++)  {
       loco[channel]->getFct(j)->setActive(f[j]);
     }
     update();

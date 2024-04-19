@@ -86,5 +86,8 @@
 
 #define prefNameLocoLib "locoLib"
 #define prefNameDriveAutomatically "driveAutom" // nicht länger als 14 Zeichen. Noch nachschauen, warum
+#define prefNameExtButton "extBtn" // Navigation nur mit ext. Tastern
+#define prefNameFkt31 "fkt31"      // Funktionserweiterung bis F31
+#define prefNameAdvLigth "advLgt" // Erweiterte Lichtanzeige
 
 #endif

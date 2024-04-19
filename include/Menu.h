@@ -17,10 +17,6 @@ HtmlPage page[numPages] = {
   {"", "w3.css", "text/css"},
   {"", "websocket.js", "text/javascript"},
   {"", "locoData.csv", "text/plain"},
-  {"", "N025.xml", "text/xml"},
-  {"", "DCX76.xml", "text/xml"},
-  {"", "decoder.xsl", "text/xsl"},  
-  {"", "decoder.js", "text/javascript"},  
   {LastPageMarker, "", ""},
 };
 

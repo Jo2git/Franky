@@ -31,7 +31,7 @@ bool Page::reInit = false;
 
 
 void Page::drawStatusBar() {
-  int color;
+  int color = TFT_DARKGREY;
   if (WiFi.status() != WL_CONNECTED) {
     color = colorWiFiDisconnected;
     M5Btn::ledRing(0, 0, 0, 10); // LED-Ring AUS
